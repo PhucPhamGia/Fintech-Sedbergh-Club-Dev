@@ -1,5 +1,7 @@
 <?php
 
+// Handle database-related functions such as data import and retrieval
+
 namespace App\Controllers;
 use CodeIgniter\Controller;
 use App\Controllers\BaseController;
