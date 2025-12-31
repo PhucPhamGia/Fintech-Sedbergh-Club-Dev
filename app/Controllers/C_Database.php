@@ -60,6 +60,14 @@ class C_Database extends BaseController
             ];
         }
 
+        $data['ma50'] = [];
+        foreach ($rowsma20 as $row) {
+            $data['ma50'][] = [
+            $row['date'],                   // label
+            (float)$row['ma50'],            // ma50
+            ];
+        }
+
         // reverse the rows order
         $data['table'] = array_reverse($data['table']);
   
@@ -67,6 +75,8 @@ class C_Database extends BaseController
         $data['table'] = json_encode($data['table'], JSON_NUMERIC_CHECK);
         $data['ma20'] = array_reverse($data['ma20']);
         $data['ma20'] = json_encode($data['ma20'], JSON_NUMERIC_CHECK);
+        $data['ma50'] = array_reverse($data['ma50']);
+        $data['ma50'] = json_encode($data['ma50'], JSON_NUMERIC_CHECK);
 
         return view('V_Database', $data);
  

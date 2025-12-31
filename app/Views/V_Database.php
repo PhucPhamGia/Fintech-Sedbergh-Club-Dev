@@ -20,10 +20,12 @@ Yo, write sum comments dawg
       // Load PHP data arrays
       const ohlcData = <?= $table ?>;  // Candlestick data: [Date, Low, Open, Close, High]
       const ma20Data = <?= $ma20 ?>;   // MA20 data: [Date, MA20]
+      const ma50Data = <?= $ma50 ?>;   // MA50 data: [Date, MA50]
 
       // Create DataTables
       const ohlcTable = google.visualization.arrayToDataTable(ohlcData, true);
       const ma20Table = google.visualization.arrayToDataTable(ma20Data, true);
+      const ma50Table = google.visualization.arrayToDataTable(ma50Data, true);
 
       // Join both datasets on Date column
       const joinedData = google.visualization.data.join(

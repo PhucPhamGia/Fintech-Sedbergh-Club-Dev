@@ -76,18 +76,5 @@ class M_Coin_Data extends Model
           ->findAll($limit);
     }
 
-    function get_ma50($days)
-    {
-      $days = (int)$days;
-      $milliseconds_in_a_day = 86400000;
-      $current_time_milliseconds = round(microtime(true) * 1000);
-      $start_time = $current_time_milliseconds - ($days * $milliseconds_in_a_day);
-
-      return $this->select('ma50')
-          ->where('open_time >=', $start_time)
-          ->orderBy('open_time', 'ASC')
-          ->get()
-          ->getResultArray();
-    }
     
 }
