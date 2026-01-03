@@ -12,74 +12,7 @@ class C_Database extends BaseController
     protected $M_Coin_Data;
     public function __construct()
     {
-        $this->M_Coin_Data = model(M_Coin_Data::class); // Call M)Coin_Data model by $this->M_Coin_Data->method()
-    }
-
-    public function Database() 
-    {
-        helper(['form', 'url']);
-        $request = \Config\Services::request();
-        $uri = $request->getUri();
-        $coin = $uri->getSegment(2);
-        $days = $uri->getSegment(3);
-        $searchInput = $request->getPost('search_day');
-
-        $data["coin"] = $coin;
-        $data["coinname"] = $this->M_Coin_Data->get_coinname_by_id($coin);
-        $data["days"] = $days;
-        $data['record']= $this->M_Coin_Data->get_data_by_coin_id_n_day($coin, $days);
-        $data['search_day'] = $searchInput;
-
-
-        if (!empty($searchInput)) {
-            $days = (int)$searchInput;
-            return redirect()->to('/public/database/' . $coin . '/' . $days);
-        }
-
-        $rows = $this->M_Coin_Data->get_data_for_candlestickchart($coin, $days);
-
-        $data['table'] = [];
-        foreach ($rows as $row) {
-            $data['table'][] = [
-            $row['date'],                   // label
-            (float)$row['low_price'],       // low
-            (float)$row['open_price'],      // open
-            (float)$row['close_price'],     // close
-            (float)$row['high_price']       // high
-            ];
-        }
-
-        $coin2 = $coin * 2 /3;
-        $rowsma20 = $this->M_Coin_Data->get_ma20($days, $coin);
-
-        $data['ma20'] = [];
-        foreach ($rowsma20 as $row) {
-            $data['ma20'][] = [
-            $row['date'],                   // label
-            (float)$row['ma20'],            // ma20
-            ];
-        }
-
-        $data['ma50'] = [];
-        foreach ($rowsma20 as $row) {
-            $data['ma50'][] = [
-            $row['date'],                   // label
-            (float)$row['ma50'],            // ma50
-            ];
-        }
-
-        // reverse the rows order
-        $data['table'] = array_reverse($data['table']);
-  
-
-        $data['table'] = json_encode($data['table'], JSON_NUMERIC_CHECK);
-        $data['ma20'] = array_reverse($data['ma20']);
-        $data['ma20'] = json_encode($data['ma20'], JSON_NUMERIC_CHECK);
-        $data['ma50'] = array_reverse($data['ma50']);
-        $data['ma50'] = json_encode($data['ma50'], JSON_NUMERIC_CHECK);
-
-        return view('V_Database', $data);
- 
+        $this->M_Coin_Data = new M_Coin_Data(); // Call M)Coin_Data model by $this->M_Coin_Data->method()
     }
 
         // import data for latest 1 year, 12h interval
@@ -142,7 +75,7 @@ class C_Database extends BaseController
                 }
             }
         }
-        return redirect()->to('/public/database/1/50')->with('success', 'Data imported successfully to database!');
+        return redirect()->to('/database/1/50')->with('success', 'Data imported successfully to database!');
     }
 
     // import daily data for today, 12h interval
@@ -166,10 +99,8 @@ class C_Database extends BaseController
             $response = curl_exec($ch);
             if ($response === false) {
             $error = curl_error($ch);
-            curl_close($ch);
             return $this->response->setStatusCode(500)->setJSON(['error' => "cURL Error: $error"]);
             }
-            curl_close($ch);
 
             $data = json_decode($response, true);
 
@@ -205,7 +136,7 @@ class C_Database extends BaseController
                 }
             }
         }
-        return redirect()->to('/public/database/1/50')->with('success', 'Data imported successfully to database!');
+        return redirect()->to('database/1/50')->with('success', 'Data imported successfully to database!');
     }
 
     public function MA20()
@@ -243,7 +174,7 @@ class C_Database extends BaseController
                 $btcModel->updateBatch($updates, 'id');
             }
         }
-        return redirect()->to('/public/database/1/50')->with('success', 'Data imported successfully to database!');
+        return redirect()->to('database/1/50')->with('success', 'Data imported successfully to database!');
     }
 
     public function MA50()
@@ -282,7 +213,7 @@ class C_Database extends BaseController
                 $btcModel->updateBatch($updates, 'id');
             }
         }
-        return redirect()->to('/public/database/1/50')->with('success', 'Data imported successfully to database!');
+        return redirect()->to('database/1/50')->with('success', 'Data imported successfully to database!');
     }
 }
 

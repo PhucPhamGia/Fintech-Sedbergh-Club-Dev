@@ -14,9 +14,6 @@ body {
     overflow-y: scroll; /* keeps scrollbar space consistent */
 }
 
-
-
-
 .circle-menu-container {
     position: absolute;
     top: 18px;

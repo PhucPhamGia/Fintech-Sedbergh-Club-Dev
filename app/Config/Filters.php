@@ -34,6 +34,9 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
+        'rememberme'    => \App\Filters\RememberMe::class,
+        'auth'          => \App\Filters\AuthFilter::class,
+        'admin'         => \App\Filters\AdminFilter::class,
     ];
 
     /**
@@ -72,13 +75,14 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
+            'rememberme',
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
         ],
         'after' => [
             // 'honeypot',
-            // 'secureheaders',
+            'secureheaders',
         ],
     ];
 
@@ -106,5 +110,8 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [];
+    public array $filters = [
+        // Protect auth POST endpoints from CSRF without breaking other POST routes.
+        'csrf' => ['before' => ['auth/*']],
+    ];
 }

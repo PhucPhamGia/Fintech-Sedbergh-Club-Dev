@@ -130,6 +130,21 @@
 
   <!-- Circle Dropdown Content -->
   <div class="circle-dropdown" id="circleDropdown">
+    <form action="<?= site_url('importbinance') ?>" method="post" style="margin: 0;">
+      <button type="submit" class="simple-btn">Import Data</button>
+    </form>
+    <form action="<?= site_url('importbinancedaily') ?>" method="post" style="margin: 0;">
+      <button type="submit" class="simple-btn">Import data today</button>
+    </form>
+    <form action="<?= site_url('importma20') ?>" method="post" style="margin: 0;">
+      <button type="submit" class="simple-btn">Calculate MA20</button>
+    </form>
+    <form action="<?= site_url('importma50') ?>" method="post" style="margin: 0;">
+      <button type="submit" class="simple-btn">Calculate MA50</button>
+    </form>
+
+
+
       <hr style="border: 0.5px solid #2a3d59; margin: 6px 0;">
       <a href="/">Back</a>
     </div>

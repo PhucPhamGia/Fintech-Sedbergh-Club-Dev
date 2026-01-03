@@ -1,0 +1,231 @@
+:root {
+    --bg: #181e27;
+    --panel: #202b3a;
+    --panel-2: #2d3a4b;
+    --text: #e8eaf6;
+    --muted: rgba(232, 234, 246, 0.75);
+    --field-bg: #181e27;
+    --border: #2176ff;
+    --accent: #2176ff;
+    --danger: #a70000;
+    --danger-bg: #ffdddd;
+    --success: #006600;
+    --success-bg: #ddffdd;
+    --btn-bg: #261b21;
+    --btn-border: #ff595e;
+    --btn-hover: #e24b50;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    background: var(--bg);
+    margin: 0;
+    padding: 48px 16px 24px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+}
+
+.message {
+    max-width: 420px;
+    margin: 0 auto 16px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: center;
+    border: 2px solid;
+}
+
+.message.error {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+.message.success {
+    background: var(--success-bg);
+    color: var(--success);
+    border-color: var(--success);
+}
+
+#signin {
+    background: var(--panel);
+    width: 100%;
+    max-width: 420px;
+    margin: auto;
+    padding: 34px 30px 26px;
+    border-radius: 14px;
+    border: 2px solid var(--border);
+    text-align: center;
+    color: var(--text);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+#signin h1 {
+    font-weight: 600;
+    margin: 0 0 22px;
+    color: var(--text);
+    font-size: 2em;
+    letter-spacing: 0.3px;
+}
+
+form {
+    position: relative;
+    margin-top: 18px;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 18px;
+}
+
+.input-label {
+    position: absolute;
+    left: 16px;
+    top: 13px;
+    color: var(--muted);
+    transition: all 0.18s ease;
+    pointer-events: none;
+    background: transparent;
+    padding: 0 4px;
+    font-size: 1em;
+}
+
+form input {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    width: 100%;
+    padding: 14px 12px 12px;
+    font-size: 16px;
+    border: 1px solid rgba(33, 118, 255, 0.85);
+    border-radius: 10px;
+    outline: none;
+    background: var(--field-bg);
+    color: var(--text);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+form input:hover {
+    border-color: var(--accent);
+}
+
+form input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(33, 118, 255, 0.25);
+}
+
+form input:focus + .input-label,
+form input:not(:placeholder-shown) + .input-label {
+    top: -10px;
+    left: 12px;
+    font-size: 12px;
+    color: var(--accent);
+    background: var(--panel);
+}
+
+form input[type="checkbox"] {
+    margin: 0;
+    width: auto;
+    vertical-align: middle;
+    accent-color: var(--accent);
+}
+
+form > label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0 10px;
+    color: var(--muted);
+    font-size: 14px;
+    text-align: left;
+}
+
+.form-links {
+    display: flex;
+    justify-content: space-between;
+    margin: 8px 0 8px;
+}
+
+.form-links a {
+    font-size: 14px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.form-links a:hover {
+    text-decoration: underline;
+}
+
+#submit_button {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    width: 100%;
+    padding: 12px 0;
+    background: var(--btn-bg);
+    color: var(--text);
+    border: 2px solid var(--btn-border);
+    border-radius: 12px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.2s ease, transform 0.05s ease;
+}
+
+#submit_button:hover {
+    background: var(--btn-hover);
+}
+
+#submit_button:focus {
+    background: var(--panel-2);
+    color: var(--text);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 89, 94, 0.22);
+}
+
+#submit_button:active {
+    transform: translateY(1px);
+}
+
+footer {
+    margin-top: 24px;
+    padding: 16px 0;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+}
+
+footer a {
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+    body {
+        padding-top: 28px;
+    }
+
+    #signin {
+        padding: 28px 18px 22px;
+        border-radius: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+    }
+}

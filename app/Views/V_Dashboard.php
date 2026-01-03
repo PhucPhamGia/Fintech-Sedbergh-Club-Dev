@@ -8,7 +8,7 @@ Yo, write sum comments dawg
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard</title>
-  <link rel="stylesheet" href="<?= base_url('assets/css/dashboard.css') ?>">
+  <link rel="stylesheet" href="  <?= base_url('assets/css/dashboard.css'); ?>">
 </head>
 <body>
   <!-- Circle Dropdown Menu -->
@@ -33,7 +33,7 @@ Yo, write sum comments dawg
 
       <!-- Dropdown Boxes -->
       <hr style="border: 0.5px solid #2a3d59; margin: 6px 0;">
-      <a href="<?= site_url('public/database/1/50') ?>">Database</a>
+      <a href="<?= site_url('database/1/50') ?>">Database</a>
       <!-- <a href="<= site_url('login') ?>">Login</a> -->
     </div>
   </div>
@@ -69,7 +69,6 @@ Yo, write sum comments dawg
     <div class="crypto-title">SOL/USDT</div>
     <div class="main-price" id="sol-price">Loading...</div>
   </button>
-
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
