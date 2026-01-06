@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\M_Users;
 use App\Models\M_Auth;
 use Config\Services;
+use CodeIgniter\I18n\Time;
 
 class C_Auth extends BaseController
 {
