@@ -33,7 +33,7 @@ class C_Auth extends BaseController
 
         # Validation rules
         $rules = [
-            'username' => 'required|min_length[4]|max_length[20]|regex_match[/^\S+$/]', # Length 4 - 20, required, no spaces
+            'username' => 'required|min_length[4]|max_length[25]|regex_match[/^\S+$/]', # Length 4 - 25, required, no spaces
             'password' => 'required|min_length[6]|max_length[255]', # Length 6 - 255, required
         ];
 
@@ -269,8 +269,8 @@ class C_Auth extends BaseController
         $rules = [
             'first_name'        => 'required|min_length[2]|max_length[50]',
             'last_name'         => 'required|min_length[2]|max_length[50]',
-            'username'         => 'required|min_length[4]|max_length[20]|regex_match[/^\S+$/]|is_unique[auth.username]',
-            'email'            => 'required|valid_email|max_length[100]|is_unique[auth.email]|no_email_subaddress',
+            'username'         => 'required|min_length[4]|max_length[25]|regex_match[/^\S+$/]|is_unique[auth.username]',
+            'email'            => 'required|valid_email|max_length[100]|is_unique[auth.email]',
             'password'         => 'required|min_length[6]|max_length[255]|matches[password_confirm]',
             'password_confirm' => 'required|min_length[6]|max_length[255]',
         ];
@@ -290,7 +290,7 @@ class C_Auth extends BaseController
             'username' => [
                 'required'    => 'Username is required.',
                 'min_length'  => 'Username must be at least 4 characters.',
-                'max_length'  => 'Username must not exceed 20 characters.',
+                'max_length'  => 'Username must not exceed 25 characters.',
                 'regex_match' => 'Username must not contain spaces.',
                 'is_unique'   => 'Username is already taken.',
             ],
@@ -299,7 +299,6 @@ class C_Auth extends BaseController
                 'valid_email'          => 'Please enter a valid email address.',
                 'max_length'           => 'Email must not exceed 100 characters.',
                 'is_unique'            => 'Email is already registered.',
-                'no_email_subaddress'  => 'Email addresses with plus signs or consecutive dots are not allowed.',
             ],
             'password' => [
                 'required'   => 'Password is required.',
@@ -313,20 +312,6 @@ class C_Auth extends BaseController
                 'max_length' => 'Password confirmation must not exceed 255 characters.',
             ],
         ];
-
-        # Register custom validation rule
-        $this->validator->setRule('no_email_subaddress', '', static function ($value, &$error = null): bool {
-            if (strpos($value, '+') !== false) {
-                $error = 'Email addresses with plus signs are not allowed.';
-                return false;
-            }
-            if (preg_match('/\.{2,}/', $value)) {
-                $error = 'Email addresses with consecutive dots are not allowed.';
-                return false;
-            }
-            return true;
-        });
-
         # Error handling
         if (! $this->validate($rules, $messages)) {
             return redirect()->back()

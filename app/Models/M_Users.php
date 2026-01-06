@@ -10,12 +10,12 @@ class M_Users extends Model
 	protected $returnType = 'array';
 
 	protected $allowedFields = [
-        'description',
-        'first_name',
-        'last_name',
-        'display_name',
+        'description',      # VARCHAR(255)
+        'first_name',       # VARCHAR(50)
+        'last_name',        # VARCHAR(50)
+        'display_name',     # VARCHAR(100)
         'status',           # Banned | Active | Away | Inactive
         'role',             # Admin | Moderator | User | Guest
-		'created_at',
+		'created_at',       # TIMESTAMP
 	];
 }

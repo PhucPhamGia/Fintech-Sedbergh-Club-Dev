@@ -64,7 +64,7 @@ Use <form> to submit login data (POST method) to Auth controller
 
                 // Validation rules (matching server-side)
                 const USERNAME_MIN_LENGTH = 4;
-                const USERNAME_MAX_LENGTH = 20;
+                const USERNAME_MAX_LENGTH = 25;
                 const PASSWORD_MIN_LENGTH = 6;
                 const PASSWORD_MAX_LENGTH = 255;
 
