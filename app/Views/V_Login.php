@@ -64,7 +64,7 @@ Use <form> to submit login data (POST method) to Auth controller
 
                 // Validation rules (matching server-side)
                 const USERNAME_MIN_LENGTH = 4;
-                const USERNAME_MAX_LENGTH = 25;
+                const USERNAME_MAX_LENGTH = 100;
                 const PASSWORD_MIN_LENGTH = 6;
                 const PASSWORD_MAX_LENGTH = 255;
 
@@ -182,9 +182,6 @@ Use <form> to submit login data (POST method) to Auth controller
         </main>
 
         <!-- Footer -->
-         <footer>
-            <p>Powered by <a href="https://codeigniter.com" target="_blank">CodeIgniter 4</a> and <a href="https://www.binance.com" target="_blank">Binance API</a>.</p>
-            <p>&copy; <?php echo date("Y", time())?>. All rights reserved.</p>
-        </footer>
+        <?= view('V_Footer') ?>
     </body>
 </html>

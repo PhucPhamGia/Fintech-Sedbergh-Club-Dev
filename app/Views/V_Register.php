@@ -51,7 +51,7 @@ Use <form> to submit register data (POST method) to Auth controller
                 </div>
 
                 <div class="input-group">
-                    <input type="email" id="email" name="email" placeholder=" " required>
+                    <input type="text" id="email" name="email" placeholder=" " required>
                     <span class="input-label">Email</span>
                 </div>
 
@@ -294,9 +294,6 @@ Use <form> to submit register data (POST method) to Auth controller
         </main>
 
         <!-- Footer -->
-         <footer>
-            <p>Powered by <a href="https://codeigniter.com" target="_blank">CodeIgniter 4</a> and <a href="https://www.binance.com" target="_blank">Binance API</a>.</p>
-            <p>&copy; <?php echo date("Y", time())?>. All rights reserved.</p>
-        </footer>
+        <?= view('V_Footer') ?>
     </body>
 </html>

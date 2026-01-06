@@ -18,8 +18,8 @@ class M_Auth extends Model
         'verified',			# BOOLEAN
         'verification_token', # VARCHAR(100)
         'verification_expires_at', # TIMESTAMP
-		'remember_selector', # VARCHAR(50)
-		'remember_hash', 		# VARCHAR(100)
-		'remember_expires_at', # TIMESTAMP
+		'remember_selector', # VARCHAR(32)
+		'remember_hash', 		# CHAR(64)
+		'remember_expires_at', # DATETIME
 	];
 }

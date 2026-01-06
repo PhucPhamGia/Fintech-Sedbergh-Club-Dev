@@ -33,7 +33,8 @@ class C_Auth extends BaseController
 
         # Validation rules
         $rules = [
-            'username' => 'required|min_length[4]|max_length[25]|regex_match[/^\S+$/]', # Length 4 - 25, required, no spaces
+            // Allow email login (emails often exceed 25 chars)
+            'username' => 'required|min_length[4]|max_length[100]|regex_match[/^\S+$/]',
             'password' => 'required|min_length[6]|max_length[255]', # Length 6 - 255, required
         ];
 
@@ -98,10 +99,17 @@ class C_Auth extends BaseController
             $users = $this->M_Users;
             $auth = $this->M_Auth;
 
+            // If user typed an email, normalize casing to match registration normalization.
+            $loginValue = $username;
+            $loginEmail = null;
+            if (filter_var($loginValue, FILTER_VALIDATE_EMAIL)) {
+                $loginEmail = strtolower($loginValue);
+            }
+
             // fetch user by username OR email
             $auth = $auth->groupStart()
-                ->where('username', $username)
-                ->orWhere('email', $username)
+                ->where('username', $loginValue)
+                ->orWhere('email', $loginEmail ?? $loginValue)
                 ->groupEnd()
                 ->first();
 
@@ -203,7 +211,8 @@ class C_Auth extends BaseController
                     $selector  = bin2hex(random_bytes(9));
                     $validator = bin2hex(random_bytes(32));
 
-                    $users->update($userId, [
+                    $auth = $this->M_Auth;
+                    $auth->update($userId, [
                         'remember_selector'   => $selector,
                         'remember_hash'       => hash('sha256', $validator),
                         'remember_expires_at' => Time::now()->addSeconds(self::REMEMBER_TTL)->toDateTimeString(),
@@ -226,7 +235,8 @@ class C_Auth extends BaseController
             } else {
                 // If user did not request remember-me, clear any previous token.
                 try {
-                    $users->update($userId, [
+                    $auth = $this->M_Auth;
+                    $auth->update($userId, [
                         'remember_selector'   => null,
                         'remember_hash'       => null,
                         'remember_expires_at' => null,
@@ -253,7 +263,7 @@ class C_Auth extends BaseController
             }
         }
 
-        return redirect()->to('/')->with('success', 'Login successful.');
+        return redirect()->to('/dashboard')->with('success', 'Login successful.');
     }
 
     public function Register_Post() // Handle registration form submission
@@ -261,16 +271,16 @@ class C_Auth extends BaseController
         $first_name = trim((string) $this->request->getPost('first_name'));
         $last_name = trim((string) $this->request->getPost('last_name'));
         $username = trim((string) $this->request->getPost('username'));
-        $email = trim((string) $this->request->getPost('email'));
+        // Normalize email to reduce false duplicates due to casing/whitespace.
+        $email = strtolower(trim((string) $this->request->getPost('email')));
         $password = (string) $this->request->getPost('password');
-        $password_confirm = (string) $this->request->getPost('password_confirm');
 
         # Validation rules
         $rules = [
-            'first_name'        => 'required|min_length[2]|max_length[50]',
-            'last_name'         => 'required|min_length[2]|max_length[50]',
-            'username'         => 'required|min_length[4]|max_length[25]|regex_match[/^\S+$/]|is_unique[auth.username]',
-            'email'            => 'required|valid_email|max_length[100]|is_unique[auth.email]',
+            'first_name'       => 'required|min_length[2]|max_length[50]',
+            'last_name'        => 'required|min_length[2]|max_length[50]',
+            'username'         => 'required|min_length[4]|max_length[25]|regex_match[/^\S+$/]',
+            'email'            => 'required|valid_email|max_length[100]',
             'password'         => 'required|min_length[6]|max_length[255]|matches[password_confirm]',
             'password_confirm' => 'required|min_length[6]|max_length[255]',
         ];
@@ -295,10 +305,10 @@ class C_Auth extends BaseController
                 'is_unique'   => 'Username is already taken.',
             ],
             'email' => [
-                'required'             => 'Email is required.',
-                'valid_email'          => 'Please enter a valid email address.',
-                'max_length'           => 'Email must not exceed 100 characters.',
-                'is_unique'            => 'Email is already registered.',
+                'required'    => 'Email is required.',
+                'valid_email' => 'Please enter a valid email address.',
+                'max_length'  => 'Email must not exceed 100 characters.',
+                'is_unique'   => 'Email is already registered.',
             ],
             'password' => [
                 'required'   => 'Password is required.',
@@ -319,24 +329,64 @@ class C_Auth extends BaseController
                 ->with('error', implode("\n", $this->validator->getErrors()));
         }
 
-        // Create new user
+        // Create new user (atomic). We rely on DB unique constraints and handle duplicate-key errors.
         try {
-            $users = $this->M_Users;
-            $auth = $this->M_Auth;
+            $authModel  = $this->M_Auth;
+            $usersModel = $this->M_Users;
+            $now        = Time::now()->toDateTimeString();
 
-            $auth->insert([
-                'username'   => $username,
-                'email'      => $email,
-                'password'   => password_hash($password, PASSWORD_DEFAULT),
-                'created_at' => Time::now()->toDateTimeString(),
-            ]);
+            // Both models should share the same connection group; use it for an atomic registration.
+            $conn = $authModel->db;
+            $conn->transBegin();
 
-            $users->insert([
-                'first_name' => $first_name,
-                'last_name'  => $last_name,
-                'role'      => 'User',
-                'status'    => 'active',
-            ]);
+            try {
+                // Insert auth row first
+                $authId = $authModel->insert([
+                    'username'   => $username,
+                    'email'      => $email,
+                    'password'   => password_hash($password, PASSWORD_DEFAULT),
+                    'created_at' => $now,
+                ], true);
+
+                if (! is_numeric($authId) || (int) $authId <= 0) {
+                    // If Model insert fails without throwing, surface a generic error.
+                    throw new \RuntimeException('Failed to create auth record.');
+                }
+
+                $authId = (int) $authId;
+
+                // Insert users row with matching id (required by login flow)
+                $usersOk = $usersModel->insert([
+                    'id'         => $authId,
+                    'first_name' => $first_name,
+                    'last_name'  => $last_name,
+                    'role'       => 'User',
+                    'status'     => 'active',
+                    'created_at' => $now,
+                ], false);
+
+                if ($usersOk === false) {
+                    throw new \RuntimeException('Failed to create user profile record.');
+                }
+
+                $conn->transCommit();
+            } catch (\Throwable $e) {
+                $conn->transRollback();
+
+                // Handle duplicate key errors gracefully.
+                $msg = strtolower($e->getMessage());
+                if (str_contains($msg, 'duplicate') || str_contains($msg, '1062')) {
+                    if (str_contains($msg, 'email')) {
+                        return redirect()->back()->withInput()->with('error', 'Email is already registered.');
+                    }
+                    if (str_contains($msg, 'username')) {
+                        return redirect()->back()->withInput()->with('error', 'Username is already taken.');
+                    }
+                    return redirect()->back()->withInput()->with('error', 'Email or username is already registered.');
+                }
+
+                throw $e;
+            }
         } catch (\Throwable $e) {
             log_message('error', 'Registration failed: ' . $e->getMessage());
             return redirect()->back()->withInput()->with('error', 'Registration is temporarily unavailable.');

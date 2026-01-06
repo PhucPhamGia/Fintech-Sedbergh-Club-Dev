@@ -5,15 +5,23 @@
 namespace App\Controllers;
 use App\Models\M_Coin_Data;
 use App\Models\M_Auth;
+use App\Models\M_Users;
 
 
 class C_View extends BaseController
 {
     protected $M_Auth;
+    protected $M_Users;
     public function __construct()
     {
         helper('url');
         $this->M_Auth = new M_Auth(); // Call M_Auth model by $this->M_Auth->method()
+        $this->M_Users = new M_Users();
+    }
+
+    public function Home()
+    {
+        return view('V_Home');
     }
 
     // Show dashboard page
@@ -89,7 +97,7 @@ class C_View extends BaseController
 
         // Get user role from database (not from session to prevent spoofing)
         $userId = session()->get('user_id');
-        $user = $this->M_Auth->find($userId);
+        $user = $this->M_Users->find($userId);
         
         if (!$user) {
             session()->destroy();
@@ -99,7 +107,7 @@ class C_View extends BaseController
         $userRole = $user['role'] ?? null;
         
         if ($userRole === 'Admin') {
-            return view('V_Database_Admin', $data);
+            return view('admin/V_Database_Admin', $data);
         } else {
             return view('V_Database', $data);
         }

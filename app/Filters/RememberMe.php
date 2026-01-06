@@ -2,7 +2,7 @@
 
 namespace App\Filters;
 
-use App\Models\M_Users;
+use App\Models\M_Auth;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -40,8 +40,8 @@ class RememberMe implements FilterInterface
 			return;
 		}
 
-		$users = new M_Users();
-		$user  = $users->where('remember_selector', $selector)->first();
+		$auth = new M_Auth();
+		$user  = $auth->where('remember_selector', $selector)->first();
 		if (! is_array($user) && ! is_object($user)) {
 			return;
 		}
@@ -53,18 +53,18 @@ class RememberMe implements FilterInterface
 
 		$expiresAtRaw = is_array($user) ? ($user['remember_expires_at'] ?? null) : ($user->remember_expires_at ?? null);
 		if (! is_string($expiresAtRaw) || $expiresAtRaw === '') {
-			$this->clearRememberMe($users, (int) $userId);
+			$this->clearRememberMe($auth, (int) $userId);
 			return;
 		}
 
 		try {
 			$expiresAt = Time::parse($expiresAtRaw);
 			if ($expiresAt->isBefore(Time::now())) {
-				$this->clearRememberMe($users, (int) $userId);
+				$this->clearRememberMe($auth, (int) $userId);
 				return;
 			}
 		} catch (\Throwable $e) {
-			$this->clearRememberMe($users, (int) $userId);
+			$this->clearRememberMe($auth, (int) $userId);
 			return;
 		}
 
@@ -73,7 +73,7 @@ class RememberMe implements FilterInterface
 
 		if ($expectedHash === '' || ! hash_equals(strtolower($expectedHash), strtolower($actualHash))) {
 			// Token mismatch: invalidate stored token and clear cookie.
-			$this->clearRememberMe($users, (int) $userId);
+			$this->clearRememberMe($auth, (int) $userId);
 			return;
 		}
 
@@ -90,7 +90,7 @@ class RememberMe implements FilterInterface
 			$newSelector  = bin2hex(random_bytes(9));
 			$newValidator = bin2hex(random_bytes(32));
 
-			$users->update((int) $userId, [
+			$auth->update((int) $userId, [
 				'remember_selector'   => $newSelector,
 				'remember_hash'       => hash('sha256', $newValidator),
 				'remember_expires_at' => Time::now()->addSeconds(self::TTL_SECONDS)->toDateTimeString(),
@@ -119,10 +119,10 @@ class RememberMe implements FilterInterface
 		// no-op
 	}
 
-	private function clearRememberMe(M_Users $users, int $userId): void
+	private function clearRememberMe(M_Auth $auth, int $userId): void
 	{
 		try {
-			$users->update($userId, [
+			$auth->update($userId, [
 				'remember_selector'   => null,
 				'remember_hash'       => null,
 				'remember_expires_at' => null,

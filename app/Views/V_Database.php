@@ -201,6 +201,8 @@
     </table>
   </div>
 
+  <!-- Footer -->
+  <?= view('V_Footer') ?>
 </body>
 </html>
 

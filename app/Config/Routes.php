@@ -11,10 +11,13 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 # User
+# Home
+$routes->get('/', 'C_View::Home');
+
 # Dashboard
 $routes->group('', ['filter' => 'auth'], function($routes) {
-    $routes->get('/', 'C_View::Dashboard');
-    $routes->post('/', 'C_View::Dashboard');
+    $routes->get('/dashboard', 'C_View::Dashboard');
+    $routes->post('/dashboard', 'C_View::Dashboard');
 });
 
 # Database

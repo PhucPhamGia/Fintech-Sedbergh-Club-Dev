@@ -252,5 +252,8 @@ Yo, write sum comments dawg
     loadBinanceChartByRange(selectedRange, selectedSymbol); // Load default chart
     setInterval(updateWidgetPrices, 60000);      // Refresh prices every 60s
   </script>
+
+  <!-- Footer -->
+  <?= view('V_Footer') ?>
 </body>
 </html>

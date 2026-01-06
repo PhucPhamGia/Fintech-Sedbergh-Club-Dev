@@ -195,24 +195,6 @@ form > label {
     transform: translateY(1px);
 }
 
-footer {
-    margin-top: 24px;
-    padding: 16px 0;
-    font-size: 12px;
-    color: var(--muted);
-    text-align: center;
-}
-
-footer a {
-    color: var(--text);
-    text-decoration: none;
-    font-weight: 600;
-}
-
-footer a:hover {
-    text-decoration: underline;
-}
-
 @media (max-width: 480px) {
     body {
         padding-top: 28px;
