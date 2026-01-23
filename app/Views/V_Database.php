@@ -97,7 +97,7 @@
     }
 
     function openDatabase(coinId) {
-      window.location.href = `/database/${coinId}/${currentFix}`;
+      window.location.href = '<?= site_url('database') ?>/' + coinId + '/<?= $days ?>';
     }
 
     btn.addEventListener('click', function (e) {
@@ -131,7 +131,7 @@
   <!-- Circle Dropdown Content -->
   <div class="circle-dropdown" id="circleDropdown">
       <hr style="border: 0.5px solid #2a3d59; margin: 6px 0;">
-      <a href="/">Back</a>
+      <a href="<?= site_url('dashboard') ?>">Back</a>
     </div>
   </div>
 
@@ -205,24 +205,3 @@
   <?= view('V_Footer') ?>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
