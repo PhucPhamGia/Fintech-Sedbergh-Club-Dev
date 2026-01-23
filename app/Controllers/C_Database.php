@@ -12,10 +12,42 @@ class C_Database extends BaseController
     protected $M_Coin_Data;
     public function __construct()
     {
-        $this->M_Coin_Data = new M_Coin_Data(); // Call M)Coin_Data model by $this->M_Coin_Data->method()
+        $this->M_Coin_Data = new M_Coin_Data(); // Call M_Coin_Data model by $this->M_Coin_Data->method()
     }
 
-        // import data for latest 1 year, 12h interval
+    /**
+     * Binance_Import() - Import Historical Kline Data
+     * 
+     * PURPOSE: Import last 100 days of cryptocurrency kline data from Binance API at 12h intervals
+     * 
+     * FLOW:
+     * 1. Get all coins from tbl_coin via get_list_coin()
+     * 2. For each coin, construct Binance API URL with 100-day time range
+     * 3. Execute cURL request to https://api.binance.com/api/v3/klines
+     * 4. Validate cURL response and parse JSON
+     * 5. Check for Binance API errors (if response contains 'code' field)
+     * 6. For each kline in response:
+     *    - Extract date from open_time (milliseconds → Y-m-d format)
+     *    - Check if record already exists (duplicate prevention via date + id_coin + open_time)
+     *    - If not exists, insert all 13 kline fields into btcdatadb
+     * 7. Redirect to /database/1/50 with success message
+     * 
+     * API DETAILS:
+     * - Endpoint: https://api.binance.com/api/v3/klines
+     * - Symbol format: coinname (e.g., BTCUSDT)
+     * - Interval: 12h (12-hour candles)
+     * - Time range: Last 100 days (calculated via strtotime)
+     * - Response: Array of klines [open_time, open_price, high_price, low_price, close_price, volume, close_time, quote_volume, number_of_trades, taker_base_volume, taker_quote_volume, ...]
+     * 
+     * ERROR HANDLING:
+     * ✅ cURL failure detection: if ($response === false)
+     * ✅ API error detection: if (isset($klines['code']))
+     * ✅ Duplicate prevention: countAllResults() check before insert
+     * 
+     * DATABASE FIELDS INSERTED:
+     * id_coin, date, open_time, open_price, high_price, low_price, close_price, 
+     * volume, close_time, quote_volume, number_of_trades, taker_base_volume, taker_quote_volume
+     */
     public function Binance_Import()
     {
         $data['coin_map'] = $this->M_Coin_Data->get_list_coin();
@@ -78,7 +110,39 @@ class C_Database extends BaseController
         return redirect()->to('/database/1/50')->with('success', 'Data imported successfully to database!');
     }
 
-    // import daily data for today, 12h interval
+    /**
+     * Binance_Daily_Import() - Import Today's Kline Data
+     * 
+     * PURPOSE: Import today's cryptocurrency kline data from Binance API at 12h intervals
+     * 
+     * FLOW:
+     * 1. Get all coins from tbl_coin via get_list_coin()
+     * 2. For each coin, construct Binance API URL with today's time range only
+     * 3. Execute cURL request to https://api.binance.com/api/v3/klines
+     * 4. Validate cURL response and parse JSON
+     * 5. Check for Binance API errors (if response contains 'code' field)
+     * 6. For each kline in response:
+     *    - Extract date from open_time (milliseconds → Y-m-d format)
+     *    - Check if record already exists (duplicate prevention via date + id_coin + open_time)
+     *    - If not exists, insert all 13 kline fields into btcdatadb
+     * 7. Redirect to database/1/50 with success message
+     * 
+     * API DETAILS:
+     * - Endpoint: https://api.binance.com/api/v3/klines
+     * - Symbol format: coinname (e.g., BTCUSDT)
+     * - Interval: 12h (12-hour candles)
+     * - Time range: Today only (from 00:00 UTC to current time)
+     * - Response: Array of klines [open_time, open_price, high_price, low_price, close_price, volume, close_time, quote_volume, number_of_trades, taker_base_volume, taker_quote_volume, ...]
+     * 
+     * ERROR HANDLING:
+     * ✅ cURL failure detection: if ($response === false)
+     * ✅ API error detection: if (isset($data['code']))
+     * ✅ Duplicate prevention: countAllResults() check before insert
+     * 
+     * DIFFERENCES FROM Binance_Import():
+     * - Time scope: Today only (strtotime('today midnight')) instead of last 100 days
+     * - Use case: Daily incremental updates instead of historical backfill
+     */
     public function Binance_Daily_Import()
     {
         $data['coin_map'] = $this->M_Coin_Data->get_list_coin();
@@ -139,6 +203,38 @@ class C_Database extends BaseController
         return redirect()->to('database/1/50')->with('success', 'Data imported successfully to database!');
     }
 
+    /**
+     * MA20() - Calculate 20-Period Moving Average
+     * 
+     * PURPOSE: Calculate 20-period moving average (MA20) for all coins and update btcdatadb
+     * 
+     * ALGORITHM:
+     * 1. Get all coins from tbl_coin
+     * 2. For each coin:
+     *    - Fetch all kline records sorted by open_time ASC (oldest → newest)
+     *    - Skip if less than 41 records (need 40 candles for first MA calculation)
+     *    - Initialize sliding window (array) and sum accumulator
+     * 3. For each record in sorted klines:
+     *    - When window reaches 40 elements:
+     *      • Calculate MA20 = sum / 40 (rounded to 8 decimals)
+     *      • If MA20 differs from current value, add to updates batch
+     *    - Add current close_price to window and sum
+     *    - If window exceeds 40 elements, remove oldest (shift) and subtract from sum
+     * 4. Batch update all changed records via updateBatch()
+     * 5. Redirect to database/1/50 with success message
+     * 
+     * MOVING AVERAGE DETAILS:
+     * - Window size: 40 candles (represents 20 periods at 12h intervals = 10 days of data)
+     * - Calculation: SUM(close_price of 40 candles) / 40
+     * - Update condition: Only update if new MA20 ≠ stored MA20 (optimizes DB writes)
+     * - Precision: Rounded to 8 decimal places
+     * 
+     * PERFORMANCE OPTIMIZATION:
+     * ✅ Sliding window technique (O(n) instead of O(n²))
+     * ✅ Batch updates (single query instead of N queries)
+     * ✅ Conditional updates (skip if value unchanged)
+     * ✅ Early skip (continue if insufficient data)
+     */
     public function MA20()
     {
         $btcModel = new M_Coin_Data();
@@ -177,6 +273,40 @@ class C_Database extends BaseController
         return redirect()->to('database/1/50')->with('success', 'Data imported successfully to database!');
     }
 
+    /**
+     * MA50() - Calculate 50-Period Moving Average
+     * 
+     * PURPOSE: Calculate 50-period moving average (MA50) for all coins and update btcdatadb
+     * 
+     * ALGORITHM:
+     * 1. Get all coins from tbl_coin
+     * 2. For each coin:
+     *    - Fetch all kline records sorted by open_time ASC (oldest → newest)
+     *    - Skip if less than 101 records (need 100 candles for first MA calculation)
+     *    - Initialize sliding window (array) and sum accumulator
+     * 3. For each record in sorted klines:
+     *    - When window reaches 100 elements:
+     *      • Calculate MA50 = sum / 100 (rounded to 8 decimals)
+     *      • If MA50 differs from current value, add to updates batch
+     *    - Add current close_price to window and sum
+     *    - If window exceeds 100 elements, remove oldest (shift) and subtract from sum
+     * 4. Batch update all changed records via updateBatch()
+     * 5. Redirect to database/1/50 with success message
+     * 
+     * MOVING AVERAGE DETAILS:
+     * - Window size: 100 candles (represents 50 periods at 12h intervals = 25 days of data)
+     * - Calculation: SUM(close_price of 100 candles) / 100
+     * - Update condition: Only update if new MA50 ≠ stored MA50 (optimizes DB writes)
+     * - Precision: Rounded to 8 decimal places
+     * 
+     * PERFORMANCE OPTIMIZATION:
+     * ✅ Sliding window technique (O(n) instead of O(n²))
+     * ✅ Batch updates (single query instead of N queries)
+     * ✅ Conditional updates (skip if value unchanged)
+     * ✅ Early skip (continue if insufficient data)
+     * 
+     * STATUS: WIP (Work In Progress) - Functional but may need optimization for large datasets
+     */
     public function MA50()
     {
         $btcModel = new M_Coin_Data();

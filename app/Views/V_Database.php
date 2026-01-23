@@ -97,7 +97,7 @@
     }
 
     function openDatabase(coinId) {
-      window.location.href = '<?= site_url('database') ?>/' + coinId + '/<?= $days ?>';
+      window.location.href = <?= site_url(`/database/${coinId}/${currentFix}`) ?>;
     }
 
     btn.addEventListener('click', function (e) {
