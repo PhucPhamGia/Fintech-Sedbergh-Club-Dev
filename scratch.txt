@@ -1,0 +1,83 @@
+public function MA20_MA50_Close($percent = 5, $id_coin = null, $startDate = null, $endDate = null, $saveToDb = false)
+    {
+        $percent = (float) $percent;
+        $model = new M_Coin_Data();
+
+        // Build coin list to iterate
+        if (!empty($id_coin)) {
+            $coin_map = [['id_coin' => $id_coin]];
+        } else {
+            $coin_map = $this->M_Coin_Data->get_list_coin();
+        }
+
+        $matches = [];
+        $updates = [];
+
+        foreach ($coin_map as $c) {
+            $query = $model->where('id_coin', $c['id_coin'])->orderBy('open_time', 'ASC');
+
+            if (!empty($startDate)) {
+                $sd = date('Y-m-d', strtotime($startDate));
+                $query->where('date >=', $sd);
+            }
+            if (!empty($endDate)) {
+                $ed = date('Y-m-d', strtotime($endDate));
+                $query->where('date <=', $ed);
+            }
+
+            $rows = $query->findAll();
+
+            foreach ($rows as $row) {
+                $ma20 = isset($row['ma20']) ? (float) $row['ma20'] : 0.0;
+                $ma50 = isset($row['ma50']) ? (float) $row['ma50'] : 0.0;
+                $close = isset($row['close_price']) ? (float) $row['close_price'] : 0.0;
+
+                if ($ma20 <= 0 || $ma50 <= 0 || $close <= 0) continue;
+
+                $avg = ($ma20 + $ma50 + $close) / 3.0;
+                if ($avg == 0) continue;
+
+                $diffPercent_ma20 = abs($ma20 - $avg) / $avg * 100.0;
+                $diffPercent_ma50 = abs($ma50 - $avg) / $avg * 100.0;
+                $diffPercent_close = abs($close - $avg) / $avg * 100.0;
+
+                $is_within_range = ($diffPercent_ma20 <= $percent) && ($diffPercent_ma50 <= $percent) && ($diffPercent_close <= $percent);
+
+                if ($is_within_range) {
+                    $matches[] = [
+                        'id' => $row['id'],
+                        'id_coin' => $c['id_coin'],
+                        'coinname' => isset($c['coinname']) ? $c['coinname'] : null,
+                        'date' => $row['date'],
+                        'open_time' => $row['open_time'],
+                        'ma20' => $ma20,
+                        'ma50' => $ma50,
+                        'close_price' => $close,
+                        'avg' => round($avg, 8),
+                        'is_within_5_percent' => true,
+                    ];
+
+                    if ($saveToDb) {
+                        $updates[] = [
+                            'id' => $row['id'],
+                            'ma20_ma50_close' => 1,
+                        ];
+                    }
+                }
+            }
+        }
+
+        if ($saveToDb && !empty($updates)) {
+            // Note: table must have column `ma20_ma50_close` (tinyint/boolean)
+            $model->updateBatch($updates, 'id');
+        }
+
+        return $this->response->setJSON([
+            'percent' => $percent,
+            'id_coin' => $id_coin,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'saved' => $saveToDb ? count($updates) : 0,
+            'matches' => $matches,
+        ]);
+    }
