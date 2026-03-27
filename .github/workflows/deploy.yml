@@ -29,6 +29,7 @@ jobs:
             **/.git*/**
             **/docs/**
             **/tests/**
+            **/vendor/**
             **/scratch.txt
             **/copilot-instructions.md
             **/.github/**
