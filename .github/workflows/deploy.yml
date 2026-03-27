@@ -1,0 +1,34 @@
+name: Deploy to Production
+
+# Chay khi push len branch main
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy via FTP
+    runs-on: ubuntu-latest
+
+    steps:
+      # Buoc 1: Lay code tu repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Buoc 2: Upload len server bang FTP
+      - name: FTP Deploy
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: /home/thuytrieu.vn/giaphuc/
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/docs/**
+            **/tests/**
+            **/scratch.txt
+            **/copilot-instructions.md
+            **/.github/**
