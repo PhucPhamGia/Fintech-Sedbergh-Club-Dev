@@ -27,7 +27,6 @@ jobs:
           exclude: |
             **/.git*
             **/.git*/**
-            **/docs/**
             **/tests/**
             **/vendor/**
             **/scratch.txt
