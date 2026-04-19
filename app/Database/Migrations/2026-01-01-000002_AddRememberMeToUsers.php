@@ -8,28 +8,22 @@ class AddRememberMeToUsers extends Migration
 {
     public function up()
     {
-        $fields = [
-            'remember_selector' => [
-                'type'       => 'VARCHAR',
-                'constraint' => 32,
-                'null'       => true,
-            ],
-            'remember_hash' => [
-                'type'       => 'CHAR',
-                'constraint' => 64,
-                'null'       => true,
-            ],
-            'remember_expires_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
-            ],
-        ];
+        // Guard: skip columns that already exist (safe to re-run)
+        $existing = $this->db->getFieldNames('auth');
 
-        $this->forge->addColumn('auth', $fields);
+        if (!in_array('remember_selector', $existing)) {
+            $this->forge->addColumn('auth', [
+                'remember_selector' => ['type' => 'VARCHAR', 'constraint' => 32, 'null' => true],
+                'remember_hash'     => ['type' => 'CHAR',    'constraint' => 64, 'null' => true],
+                'remember_expires_at' => ['type' => 'DATETIME', 'null' => true],
+            ]);
+        }
 
-        // Add unique index for selector lookups.
-        // MySQL/MariaDB syntax.
-        $this->db->query('CREATE UNIQUE INDEX auth_remember_selector_uq ON auth (remember_selector)');
+        try {
+            $this->db->query('CREATE UNIQUE INDEX auth_remember_selector_uq ON auth (remember_selector)');
+        } catch (\Throwable $e) {
+            // Index already exists — safe to ignore
+        }
     }
 
     public function down()
