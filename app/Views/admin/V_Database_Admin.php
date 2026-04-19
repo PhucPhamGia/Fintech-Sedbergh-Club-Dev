@@ -4,18 +4,26 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Database</title>
-  <link rel="stylesheet" href="<?= base_url('assets/css/database.css') ?>?v=3">
+  <link rel="stylesheet" href="<?= base_url('assets/css/database.css') ?>?v=4">
 
   <!-- Google Charts Script For Candle Chart -->
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script type="text/javascript">
+    const _rawOhlc = <?= $table ?>;
+    const _rawMa20 = <?= $ma20 ?>;
+    const _rawMa50 = <?= $ma50 ?>;
+
+    let psarAF   = 0.02;
+    let psarStep = 0.02;
+    let psarMax  = 0.20;
+
     google.charts.load('current', {'packages':['corechart']});
     google.charts.setOnLoadCallback(drawChart);
 
     function drawChart() {
-      const ohlcData = <?= $table ?>;
-      const ma20Data = <?= $ma20 ?>;
-      const ma50Data = <?= $ma50 ?>;
+      const ohlcData = _rawOhlc.map(r => r.slice());
+      const ma20Data = _rawMa20.map(r => r.slice());
+      const ma50Data = _rawMa50.map(r => r.slice());
 
       if (!ohlcData[0].includes('Date')) ohlcData.unshift(['Date', 'Low', 'Open', 'Close', 'High']);
       if (!ma20Data[0].includes('MA20')) ma20Data.unshift(['Date', 'MA20']);
@@ -32,6 +40,17 @@
         joinedData, ma50Table, 'full', [[0, 0]], [1, 2, 3, 4, 5], [1]
       );
 
+      const psarResult = computePSAR(_rawOhlc, psarAF, psarStep, psarMax);
+      const psarByDate = {};
+      _rawOhlc.forEach((row, i) => { if (psarResult[i]) psarByDate[row[0]] = psarResult[i]; });
+
+      joinedData.addColumn('number', 'PSAR↑');
+      joinedData.addColumn('number', 'PSAR↓');
+      for (let r = 0; r < joinedData.getNumberOfRows(); r++) {
+        const p = psarByDate[joinedData.getValue(r, 0)];
+        if (p) joinedData.setValue(r, p.bull ? 6 : 7, p.value);
+      }
+
       const options = {
         backgroundColor: '#202b3a',
         legend: { position: 'bottom', textStyle: { color: '#e8eaf6', fontSize: 12 } },
@@ -45,30 +64,77 @@
           gridlines: { color: '#2a3d59' },
           baselineColor: '#2a3d59'
         },
-        chartArea: {
-          backgroundColor: '#202b3a',
-          left: 65,
-          right: 20,
-          top: 40,
-          bottom: 60,
-        },
+        chartArea: { backgroundColor: '#202b3a', left: 65, right: 20, top: 40, bottom: 60 },
         interpolateNulls: true,
         seriesType: 'candlesticks',
         series: {
           0: { type: 'candlesticks', visibleInLegend: false },
-          1: { type: 'line', color: '#00e676', lineWidth: 2 },
-          2: { type: 'line', color: '#00bfff', lineWidth: 2 }
+          1: { type: 'line',    color: '#00e676', lineWidth: 2 },
+          2: { type: 'line',    color: '#00bfff', lineWidth: 2 },
+          3: { type: 'scatter', color: '#00e676', pointSize: 3, lineWidth: 0 },
+          4: { type: 'scatter', color: '#ff595e', pointSize: 3, lineWidth: 0 },
         },
         candlestick: {
           fallingColor: { strokeWidth: 1, fill: '#ff595e', stroke: '#ff595e' },
-          risingColor: { strokeWidth: 1, fill: '#2176ff', stroke: '#2176ff' }
+          risingColor:  { strokeWidth: 1, fill: '#2176ff', stroke: '#2176ff' }
         }
       };
 
-      const chart = new google.visualization.ComboChart(
-        document.getElementById('chart_div')
-      );
-      chart.draw(joinedData, options);
+      new google.visualization.ComboChart(document.getElementById('chart_div'))
+        .draw(joinedData, options);
+    }
+
+    function computePSAR(data, afStart, afStep, afMax) {
+      const n = data.length;
+      const out = new Array(n).fill(null);
+      if (n < 2) return out;
+
+      let bull = parseFloat(data[1][3]) >= parseFloat(data[0][3]);
+      let af = afStart, ep, sar;
+
+      if (bull) {
+        ep  = Math.max(parseFloat(data[0][4]), parseFloat(data[1][4]));
+        sar = Math.min(parseFloat(data[0][1]), parseFloat(data[1][1]));
+      } else {
+        ep  = Math.min(parseFloat(data[0][1]), parseFloat(data[1][1]));
+        sar = Math.max(parseFloat(data[0][4]), parseFloat(data[1][4]));
+      }
+      out[1] = { value: sar, bull };
+
+      for (let i = 2; i < n; i++) {
+        const high = parseFloat(data[i][4]);
+        const low  = parseFloat(data[i][1]);
+        let newSar = sar + af * (ep - sar);
+
+        if (bull) {
+          newSar = Math.min(newSar, parseFloat(data[i-1][1]), parseFloat(data[i-2][1]));
+          if (low <= newSar) {
+            bull = false; newSar = ep; ep = low; af = afStart;
+            newSar = Math.max(newSar, parseFloat(data[i-1][4]), parseFloat(data[i-2][4]));
+          } else if (high > ep) {
+            ep = high; af = Math.min(af + afStep, afMax);
+          }
+        } else {
+          newSar = Math.max(newSar, parseFloat(data[i-1][4]), parseFloat(data[i-2][4]));
+          if (high >= newSar) {
+            bull = true; newSar = ep; ep = high; af = afStart;
+            newSar = Math.min(newSar, parseFloat(data[i-1][1]), parseFloat(data[i-2][1]));
+          } else if (low < ep) {
+            ep = low; af = Math.min(af + afStep, afMax);
+          }
+        }
+
+        sar = newSar;
+        out[i] = { value: sar, bull };
+      }
+      return out;
+    }
+
+    function applyPSAR() {
+      psarAF   = parseFloat(document.getElementById('psarAF').value)   || 0.02;
+      psarStep = parseFloat(document.getElementById('psarStep').value) || 0.02;
+      psarMax  = parseFloat(document.getElementById('psarMax').value)  || 0.20;
+      drawChart();
     }
   </script>
 
@@ -187,6 +253,15 @@
   </div>
 
   <div id="chart_div" class="chart-container"></div>
+
+  <!-- PSAR Parameters -->
+  <div class="psar-controls">
+    <span class="psar-title">Parabolic SAR</span>
+    <label>AF Start <input id="psarAF"   type="number" value="0.02" min="0.001" max="0.5"  step="0.005"></label>
+    <label>AF Step  <input id="psarStep" type="number" value="0.02" min="0.001" max="0.5"  step="0.005"></label>
+    <label>AF Max   <input id="psarMax"  type="number" value="0.20" min="0.01"  max="1.0"  step="0.01"></label>
+    <button onclick="applyPSAR()">Apply</button>
+  </div>
 
   <!-- Data Table -->
   <div class="table-container">

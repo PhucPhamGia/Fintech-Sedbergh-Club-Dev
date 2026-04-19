@@ -4,62 +4,60 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Database</title>
-  <link rel="stylesheet" href="<?= base_url('assets/css/database.css') ?>?v=3">
+  <link rel="stylesheet" href="<?= base_url('assets/css/database.css') ?>?v=4">
 
   <!-- Google Charts Script For Candle Chart -->
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script type="text/javascript">
+    // Raw data from PHP — immutable, so drawChart() can be called multiple times safely
+    const _rawOhlc = <?= $table ?>;
+    const _rawMa20 = <?= $ma20 ?>;
+    const _rawMa50 = <?= $ma50 ?>;
+
+    // PSAR parameters (adjustable via controls)
+    let psarAF   = 0.02;
+    let psarStep = 0.02;
+    let psarMax  = 0.20;
+
     google.charts.load('current', {'packages':['corechart']});
     google.charts.setOnLoadCallback(drawChart);
 
     function drawChart() {
-      // Load PHP data arrays
-      const ohlcData = <?= $table ?>;    // [Date, Low, Open, Close, High]
-      const ma20Data = <?= $ma20 ?>;     // [Date, MA20]
-      const ma50Data = <?= $ma50 ?>;     // [Date, MA50]
+      // Work on fresh copies so this function is safely re-callable
+      const ohlcData = _rawOhlc.map(r => r.slice());
+      const ma20Data = _rawMa20.map(r => r.slice());
+      const ma50Data = _rawMa50.map(r => r.slice());
 
-      // Add headers if missing
-      if (!ohlcData[0].includes('Date')) {
-        ohlcData.unshift(['Date', 'Low', 'Open', 'Close', 'High']);
-      }
-      if (!ma20Data[0].includes('MA20')) {
-        ma20Data.unshift(['Date', 'MA20']);
-      }
-      if (!ma50Data[0].includes('MA50')) {
-        ma50Data.unshift(['Date', 'MA50']);
-      }
+      if (!ohlcData[0].includes('Date')) ohlcData.unshift(['Date', 'Low', 'Open', 'Close', 'High']);
+      if (!ma20Data[0].includes('MA20')) ma20Data.unshift(['Date', 'MA20']);
+      if (!ma50Data[0].includes('MA50')) ma50Data.unshift(['Date', 'MA50']);
 
-      // Create DataTables
       const ohlcTable = google.visualization.arrayToDataTable(ohlcData);
       const ma20Table = google.visualization.arrayToDataTable(ma20Data);
       const ma50Table = google.visualization.arrayToDataTable(ma50Data);
 
-      // Join OHLC + MA20 first
       let joinedData = google.visualization.data.join(
-        ohlcTable, 
-        ma20Table, 
-        'full', 
-        [[0, 0]],         // match by Date (column 0)
-        [1, 2, 3, 4],     // keep Low, Open, Close, High from OHLC
-        [1]               // keep MA20 (becomes column 5)
+        ohlcTable, ma20Table, 'full', [[0, 0]], [1, 2, 3, 4], [1]
+      );
+      joinedData = google.visualization.data.join(
+        joinedData, ma50Table, 'full', [[0, 0]], [1, 2, 3, 4, 5], [1]
       );
 
-      // Then join with MA50
-      joinedData = google.visualization.data.join(
-        joinedData,
-        ma50Table,
-        'full',
-        [[0, 0]],         // match by Date
-        [1, 2, 3, 4, 5],  // keep Low, Open, Close, High, MA20
-        [1]               // keep MA50 (becomes column 6)
-      );
+      // Compute PSAR from raw OHLC rows (no header) and add as two scatter columns
+      const psarResult = computePSAR(_rawOhlc, psarAF, psarStep, psarMax);
+      const psarByDate = {};
+      _rawOhlc.forEach((row, i) => { if (psarResult[i]) psarByDate[row[0]] = psarResult[i]; });
+
+      joinedData.addColumn('number', 'PSAR↑'); // col 6 — bull dot (below candle, green)
+      joinedData.addColumn('number', 'PSAR↓'); // col 7 — bear dot (above candle, red)
+      for (let r = 0; r < joinedData.getNumberOfRows(); r++) {
+        const p = psarByDate[joinedData.getValue(r, 0)];
+        if (p) joinedData.setValue(r, p.bull ? 6 : 7, p.value);
+      }
 
       const options = {
         backgroundColor: '#202b3a',
-        legend: {
-          position: 'bottom',
-          textStyle: { color: '#e8eaf6', fontSize: 12 }
-        },
+        legend: { position: 'bottom', textStyle: { color: '#e8eaf6', fontSize: 12 } },
         hAxis: {
           textStyle: { color: '#e8eaf6', fontSize: 12 },
           gridlines: { color: '#2a3d59' },
@@ -70,30 +68,81 @@
           gridlines: { color: '#2a3d59' },
           baselineColor: '#2a3d59'
         },
-        chartArea: {
-          backgroundColor: '#202b3a',
-          left: 65,
-          right: 20,
-          top: 40,
-          bottom: 60,
-        },
+        chartArea: { backgroundColor: '#202b3a', left: 65, right: 20, top: 40, bottom: 60 },
         interpolateNulls: true,
         seriesType: 'candlesticks',
         series: {
           0: { type: 'candlesticks', visibleInLegend: false },
-          1: { type: 'line', color: '#00e676', lineWidth: 2, labelInLegend: 'MA20' },
-          2: { type: 'line', color: '#00bfff', lineWidth: 2, labelInLegend: 'MA50' }
+          1: { type: 'line',    color: '#00e676', lineWidth: 2 },
+          2: { type: 'line',    color: '#00bfff', lineWidth: 2 },
+          3: { type: 'scatter', color: '#00e676', pointSize: 3, lineWidth: 0 },
+          4: { type: 'scatter', color: '#ff595e', pointSize: 3, lineWidth: 0 },
         },
         candlestick: {
           fallingColor: { strokeWidth: 1, fill: '#ff595e', stroke: '#ff595e' },
-          risingColor: { strokeWidth: 1, fill: '#2176ff', stroke: '#2176ff' }
+          risingColor:  { strokeWidth: 1, fill: '#2176ff', stroke: '#2176ff' }
         }
       };
 
-      const chart = new google.visualization.ComboChart(
-        document.getElementById('chart_div')
-      );
-      chart.draw(joinedData, options);
+      new google.visualization.ComboChart(document.getElementById('chart_div'))
+        .draw(joinedData, options);
+    }
+
+    // Parabolic SAR — data: [[date, low, open, close, high], ...] ASC, no header
+    // Returns [{value, bull}, ...] same length; first entry is null
+    function computePSAR(data, afStart, afStep, afMax) {
+      const n = data.length;
+      const out = new Array(n).fill(null);
+      if (n < 2) return out;
+
+      let bull = parseFloat(data[1][3]) >= parseFloat(data[0][3]);
+      let af   = afStart;
+      let ep, sar;
+
+      if (bull) {
+        ep  = Math.max(parseFloat(data[0][4]), parseFloat(data[1][4]));
+        sar = Math.min(parseFloat(data[0][1]), parseFloat(data[1][1]));
+      } else {
+        ep  = Math.min(parseFloat(data[0][1]), parseFloat(data[1][1]));
+        sar = Math.max(parseFloat(data[0][4]), parseFloat(data[1][4]));
+      }
+      out[1] = { value: sar, bull };
+
+      for (let i = 2; i < n; i++) {
+        const high = parseFloat(data[i][4]);
+        const low  = parseFloat(data[i][1]);
+
+        let newSar = sar + af * (ep - sar);
+
+        if (bull) {
+          newSar = Math.min(newSar, parseFloat(data[i-1][1]), parseFloat(data[i-2][1]));
+          if (low <= newSar) {
+            bull = false; newSar = ep; ep = low; af = afStart;
+            newSar = Math.max(newSar, parseFloat(data[i-1][4]), parseFloat(data[i-2][4]));
+          } else if (high > ep) {
+            ep = high; af = Math.min(af + afStep, afMax);
+          }
+        } else {
+          newSar = Math.max(newSar, parseFloat(data[i-1][4]), parseFloat(data[i-2][4]));
+          if (high >= newSar) {
+            bull = true; newSar = ep; ep = high; af = afStart;
+            newSar = Math.min(newSar, parseFloat(data[i-1][1]), parseFloat(data[i-2][1]));
+          } else if (low < ep) {
+            ep = low; af = Math.min(af + afStep, afMax);
+          }
+        }
+
+        sar = newSar;
+        out[i] = { value: sar, bull };
+      }
+      return out;
+    }
+
+    function applyPSAR() {
+      psarAF   = parseFloat(document.getElementById('psarAF').value)   || 0.02;
+      psarStep = parseFloat(document.getElementById('psarStep').value) || 0.02;
+      psarMax  = parseFloat(document.getElementById('psarMax').value)  || 0.20;
+      drawChart();
     }
   </script>
 
@@ -203,6 +252,15 @@
   </div>
 
   <div id="chart_div" class="chart-container"></div>
+
+  <!-- PSAR Parameters -->
+  <div class="psar-controls">
+    <span class="psar-title">Parabolic SAR</span>
+    <label>AF Start <input id="psarAF"   type="number" value="0.02" min="0.001" max="0.5"  step="0.005"></label>
+    <label>AF Step  <input id="psarStep" type="number" value="0.02" min="0.001" max="0.5"  step="0.005"></label>
+    <label>AF Max   <input id="psarMax"  type="number" value="0.20" min="0.01"  max="1.0"  step="0.01"></label>
+    <button onclick="applyPSAR()">Apply</button>
+  </div>
 
   <!-- Data Table -->
   <div class="table-container">
