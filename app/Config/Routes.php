@@ -46,4 +46,6 @@ $routes->group('', ['filter' => 'admin'], function($routes) {
     $routes->post('/importma20', 'C_Database::MA20');
     $routes->post('/importma50', 'C_Database::MA50');
     $routes->post('/importbinancedaily', 'C_Database::Binance_Daily_Import');
+    $routes->post('/importpsar', 'C_PSAR::PSAR_Batch');
+    $routes->get('/importpsar',  'C_PSAR::PSAR_Batch');
 });

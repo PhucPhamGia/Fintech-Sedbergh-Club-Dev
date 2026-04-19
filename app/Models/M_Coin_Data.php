@@ -17,6 +17,12 @@ class M_Coin_Data extends Model
         'volume', 'close_time', 'quote_volume',
         'number_of_trades', 'taker_base_volume', 'taker_quote_volume',
         'ma20', 'ma50', 'crossed_ma20_ma50',
+        // PSAR — 5 parameter sets (A–E), 4 columns each
+        'psar_a_value', 'psar_a_trend', 'psar_a_af', 'psar_a_ep',
+        'psar_b_value', 'psar_b_trend', 'psar_b_af', 'psar_b_ep',
+        'psar_c_value', 'psar_c_trend', 'psar_c_af', 'psar_c_ep',
+        'psar_d_value', 'psar_d_trend', 'psar_d_af', 'psar_d_ep',
+        'psar_e_value', 'psar_e_trend', 'psar_e_af', 'psar_e_ep',
     ];
 
     public function get_list_coin()

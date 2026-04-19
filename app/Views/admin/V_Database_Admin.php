@@ -137,6 +137,9 @@
     <form action="<?= site_url('importma50') ?>" method="post" style="margin: 0;">
       <button type="submit" class="simple-btn">Calculate MA50</button>
     </form>
+    <form action="<?= site_url('importpsar') ?>" method="post" style="margin: 0;">
+      <button type="submit" class="simple-btn">Calculate PSAR (5 sets)</button>
+    </form>
 
 
 
