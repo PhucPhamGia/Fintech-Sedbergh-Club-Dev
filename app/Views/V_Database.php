@@ -95,7 +95,7 @@
         seriesType: 'candlesticks',
         series: {
           0: { type: 'candlesticks', visibleInLegend: false },
-          1: { type: 'line', color: '#ffd600', lineWidth: 2, labelInLegend: 'MA20' },
+          1: { type: 'line', color: '#00e676', lineWidth: 2, labelInLegend: 'MA20' },
           2: { type: 'line', color: '#00bfff', lineWidth: 2, labelInLegend: 'MA50' }
         },
         candlestick: {
