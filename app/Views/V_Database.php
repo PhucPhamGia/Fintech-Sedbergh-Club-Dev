@@ -122,7 +122,7 @@
       });
     });
     
-    let currentFix = <?= $days ?? 200 ?>;
+    let currentFix = <?= $days ?? 100 ?>;
     let currentTimeframe = '<?= $timeframe ?? '12h' ?>';
 
     function openDatabase(coinId) {

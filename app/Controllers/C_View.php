@@ -38,7 +38,7 @@ class C_View extends BaseController
         $uri = $request->getUri();
         $coin      = $uri->getSegment(2);
         $timeframe = $uri->getSegment(3) ?: '12h';
-        $days      = $uri->getSegment(4) ?: 200;
+        $days      = $uri->getSegment(4) ?: 100;
         $searchInput = $request->getPost('search_day');
 
         $validTimeframes = ['15m', '30m', '1h', '4h', '6h', '12h'];
