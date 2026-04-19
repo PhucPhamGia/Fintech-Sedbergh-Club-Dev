@@ -13,30 +13,28 @@
     google.charts.setOnLoadCallback(drawChart);
 
     function drawChart() {
-      // Load PHP data arrays
-      const ohlcData = <?= $table ?>;  // Candlestick data: [Date, Low, Open, Close, High]
-      const ma20Data = <?= $ma20 ?>;   // MA20 data: [Date, MA20]
-      const ma50Data = <?= $ma50 ?>;   // MA50 data: [Date, MA50]
+      const ohlcData = <?= $table ?>;
+      const ma20Data = <?= $ma20 ?>;
+      const ma50Data = <?= $ma50 ?>;
 
-      // Create DataTables
-      const ohlcTable = google.visualization.arrayToDataTable(ohlcData, true);
-      const ma20Table = google.visualization.arrayToDataTable(ma20Data, true);
-      const ma50Table = google.visualization.arrayToDataTable(ma50Data, true);
+      if (!ohlcData[0].includes('Date')) ohlcData.unshift(['Date', 'Low', 'Open', 'Close', 'High']);
+      if (!ma20Data[0].includes('MA20')) ma20Data.unshift(['Date', 'MA20']);
+      if (!ma50Data[0].includes('MA50')) ma50Data.unshift(['Date', 'MA50']);
 
-      // Join both datasets on Date column
-      const joinedData = google.visualization.data.join(
-        ohlcTable, 
-        ma20Table, 
-        'full', 
-        [[0, 0]],   // match by first column (Date)
-        [1, 2, 3, 4], // keep Low, Open, Close, High from OHLC
-        [1],          // keep MA20,
-        [1]
+      const ohlcTable = google.visualization.arrayToDataTable(ohlcData);
+      const ma20Table = google.visualization.arrayToDataTable(ma20Data);
+      const ma50Table = google.visualization.arrayToDataTable(ma50Data);
+
+      let joinedData = google.visualization.data.join(
+        ohlcTable, ma20Table, 'full', [[0, 0]], [1, 2, 3, 4], [1]
+      );
+      joinedData = google.visualization.data.join(
+        joinedData, ma50Table, 'full', [[0, 0]], [1, 2, 3, 4, 5], [1]
       );
 
       const options = {
         backgroundColor: '#202b3a',
-        legend: 'none',
+        legend: { position: 'bottom', textStyle: { color: '#e8eaf6', fontSize: 12 } },
         hAxis: {
           textStyle: { color: '#e8eaf6', fontSize: 12 },
           gridlines: { color: '#2a3d59' },
@@ -56,8 +54,9 @@
         },
         seriesType: 'candlesticks',
         series: {
-          1: { type: 'line', color: '#ffd600', lineWidth: 2 }, // MA20 line
-          2: { type: 'line', color: '#00ffab', lineWidth: 2 }  // MA50 line
+          0: { type: 'candlesticks', visibleInLegend: false },
+          1: { type: 'line', color: '#00e676', lineWidth: 2 },
+          2: { type: 'line', color: '#00bfff', lineWidth: 2 }
         },
         candlestick: {
           fallingColor: { strokeWidth: 1, fill: '#ff595e', stroke: '#ff595e' },
@@ -100,13 +99,6 @@
       window.location.href = `/database/${coinId}/${currentFix}`;
     }
 
-    btn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      dropdown.classList.toggle('show');
-      document.querySelector('.menu-label').style.display =
-        dropdown.classList.contains('show') ? 'none' : 'inline';
-    });
-
   </script>
 </head>
 <body>
@@ -145,9 +137,8 @@
 
 
 
-      <hr style="border: 0.5px solid #2a3d59; margin: 6px 0;">
-      <a href="/">Back</a>
-    </div>
+    <hr style="border: 0.5px solid #2a3d59; margin: 6px 0;">
+    <a href="/">Back</a>
   </div>
 
   <!-- Coin widgets -->
@@ -178,7 +169,7 @@
     </form>
   </div>
 
-  <div id="chart_div" class="chart-container" style="width: 900px; height: 500px;"></div>
+  <div id="chart_div" class="chart-container"></div>
 
   <!-- Data Table -->
   <div class="table-container">
