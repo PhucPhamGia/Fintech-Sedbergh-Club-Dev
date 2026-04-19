@@ -33,7 +33,7 @@ Yo, write sum comments dawg
 
       <!-- Dropdown Boxes -->
       <hr style="border: 0.5px solid #2a3d59; margin: 6px 0;">
-      <a href="<?= site_url('database/1/50') ?>">Database</a>
+      <a href="<?= site_url('database/1/200') ?>">Database</a>
       <!-- <a href="<= site_url('login') ?>">Login</a> -->
     </div>
   </div>

@@ -90,7 +90,7 @@
       });
     });
     
-    let currentFix = <?= $fix ?? 50 ?>;
+    let currentFix = <?= $fix ?? 200 ?>;
     function updateFix(value) {
       currentFix = value;
       document.getElementById('fixValue').textContent = value;
