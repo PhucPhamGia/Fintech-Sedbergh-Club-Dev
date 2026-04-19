@@ -104,7 +104,7 @@ class C_Database extends BaseController
             }
         }
 
-        return redirect()->to('/database/1/200')->with('success', 'Historical data imported successfully!');
+        return redirect()->to('/database/1/12h/200')->with('success', 'Historical data imported successfully!');
     }
 
     /**
@@ -138,7 +138,7 @@ class C_Database extends BaseController
             }
         }
 
-        return redirect()->to('database/1/200')->with('success', 'Daily data imported successfully!');
+        return redirect()->to('database/1/12h/200')->with('success', 'Daily data imported successfully!');
     }
 
     /**
@@ -187,7 +187,7 @@ class C_Database extends BaseController
             }
         }
 
-        return redirect()->to('database/1/200')->with('success', 'MA20 calculated successfully!');
+        return redirect()->to('database/1/12h/200')->with('success', 'MA20 calculated successfully!');
     }
 
     /**
@@ -234,7 +234,7 @@ class C_Database extends BaseController
             }
         }
 
-        return redirect()->to('database/1/200')->with('success', 'MA50 calculated successfully!');
+        return redirect()->to('database/1/12h/200')->with('success', 'MA50 calculated successfully!');
     }
 
     // Find records where MA20, MA50, and close_price are all within $percent of each other.

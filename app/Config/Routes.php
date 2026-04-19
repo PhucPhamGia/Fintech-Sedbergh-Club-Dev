@@ -22,8 +22,8 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
 # Database
 $routes->group('', ['filter' => 'auth'], function($routes) {
-    $routes->get('/database/(:segment)/(:num)', 'C_View::Database/$1/$2');
-    $routes->post('/database/(:segment)/(:num)', 'C_View::Database/$1/$2');
+    $routes->get('/database/(:segment)/(:segment)/(:num)', 'C_View::Database/$1/$2/$3');
+    $routes->post('/database/(:segment)/(:segment)/(:num)', 'C_View::Database/$1/$2/$3');
 });
 
 # Authentication

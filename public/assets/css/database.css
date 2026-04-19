@@ -332,3 +332,42 @@ th {
 tr:hover {
     background: #2a2430;
 }
+
+.pagination-container {
+    width: 100%;
+    max-width: 1400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin: 10px auto var(--section-gap);
+}
+
+.pagination-container button {
+    padding: 10px 22px;
+    background: #2176ff;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.pagination-container button:hover:not(:disabled) {
+    background: #1656b7;
+}
+
+.pagination-container button:disabled {
+    background: #2a3d59;
+    color: #6b7a90;
+    cursor: default;
+}
+
+.pagination-container span {
+    color: #b0bec5;
+    font-size: 14px;
+    min-width: 180px;
+    text-align: center;
+}

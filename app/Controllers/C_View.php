@@ -30,63 +30,56 @@ class C_View extends BaseController
         return view('V_Dashboard');
     }
 
-    public function Database() 
+    public function Database()
     {
         $M_Coin_Data = new M_Coin_Data();
 
         $request = \Config\Services::request();
         $uri = $request->getUri();
-        $coin = $uri->getSegment(2);
-        $days = $uri->getSegment(3);
+        $coin      = $uri->getSegment(2);
+        $timeframe = $uri->getSegment(3) ?: '12h';
+        $days      = $uri->getSegment(4) ?: 200;
         $searchInput = $request->getPost('search_day');
+
+        $validTimeframes = ['15m', '30m', '1h', '4h', '6h', '12h'];
+        if (!in_array($timeframe, $validTimeframes)) $timeframe = '12h';
 
         // If user submits search form, redirect with new days value
         if (!empty($searchInput)) {
             $days = (int)$searchInput;
-            return redirect()->to('database/' . $coin . '/' . $days);
+            return redirect()->to('database/' . $coin . '/' . $timeframe . '/' . $days);
         }
 
-        // Fetch all necessary data
+        // Fetch all necessary data — single query, ASC order
         $coinName = $M_Coin_Data->get_coinname_by_id($coin);
-        $records = $M_Coin_Data->get_data_by_coin_id_n_day($coin, $days);
-        $rows = $M_Coin_Data->get_data_for_candlestickchart($coin, $days);
-        $rowsMA = $M_Coin_Data->get_ma20($days, $coin);
+        $records = $M_Coin_Data->get_data_by_coin_id_n_day($coin, $days, $timeframe);
 
-        // Prepare candlestick chart data
+        // Derive chart data from the same record set (ensures chart and table are in sync)
         $tableData = [];
-        foreach ($rows as $row) {
+        $ma20Data  = [];
+        $ma50Data  = [];
+        foreach ($records as $row) {
             $tableData[] = [
                 $row['date'],
                 (float)$row['low_price'],
                 (float)$row['open_price'],
                 (float)$row['close_price'],
-                (float)$row['high_price']
+                (float)$row['high_price'],
             ];
-        }
-
-        // Prepare moving average data
-        $ma20Data = [];
-        $ma50Data = [];
-        foreach ($rowsMA as $row) {
             $ma20Data[] = [
                 $row['date'],
-                (float)$row['ma20']
+                $row['ma20'] !== null ? (float)$row['ma20'] : null,
             ];
             $ma50Data[] = [
                 $row['date'],
-                (float)$row['ma50']
+                $row['ma50'] !== null ? (float)$row['ma50'] : null,
             ];
         }
-
-        // Reverse order for chart display
-        $tableData = array_reverse($tableData);
-        $ma20Data = array_reverse($ma20Data);
-        $ma50Data = array_reverse($ma50Data);
-
         // Prepare data for view
         $data = [
             'coin'      => $coin,
             'coinname'  => $coinName,
+            'timeframe' => $timeframe,
             'days'      => $days,
             'record'    => $records,
             'search_day'=> $searchInput,

@@ -46,7 +46,7 @@ class M_Coin_Data extends Model
             ->findAll($number_of_records);
     }
 
-    public function get_data_for_candlestickchart($id_coin, int $limit, $timeframe = '12h')
+    public function get_data_for_candlestickchart($id_coin, int $limit, string $timeframe = '12h')
     {
         $limit = (int)$limit;
         return $this->select('date, open_price, high_price, low_price, close_price')
@@ -56,7 +56,7 @@ class M_Coin_Data extends Model
             ->findAll($limit);
     }
 
-    public function get_data_by_coin_id_n_day($coin_id, $days, $timeframe = '12h')
+    public function get_data_by_coin_id_n_day($coin_id, $days, string $timeframe = '12h')
     {
         $days = (int)$days;
         $start = round(microtime(true) * 1000) - ($days * 86400000);
@@ -67,7 +67,7 @@ class M_Coin_Data extends Model
             ->findAll();
     }
 
-    public function get_ma20(int $limit, $coin_id, $timeframe = '12h')
+    public function get_ma20(int $limit, $coin_id, string $timeframe = '12h')
     {
         return $this->select('date, ma20, ma50')
             ->where('id_coin', $coin_id)

@@ -1,11 +1,10 @@
-<!-- SOURCE_CHECK_v2 -->
 <!DOCTYPE HTML>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Database</title>
-  <link rel="stylesheet" href="<?= base_url('assets/css/database.css') ?>?v=2">
+  <link rel="stylesheet" href="<?= base_url('assets/css/database.css') ?>?v=3">
 
   <!-- Google Charts Script For Candle Chart -->
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -18,11 +17,6 @@
       const ohlcData = <?= $table ?>;    // [Date, Low, Open, Close, High]
       const ma20Data = <?= $ma20 ?>;     // [Date, MA20]
       const ma50Data = <?= $ma50 ?>;     // [Date, MA50]
-
-      // DEBUG: Log the data to console
-      console.log('OHLC Data:', ohlcData);
-      console.log('MA20 Data:', ma20Data);
-      console.log('MA50 Data:', ma50Data);
 
       // Add headers if missing
       if (!ohlcData[0].includes('Date')) {
@@ -40,10 +34,6 @@
       const ma20Table = google.visualization.arrayToDataTable(ma20Data);
       const ma50Table = google.visualization.arrayToDataTable(ma50Data);
 
-      console.log('OHLC Table:', ohlcTable);
-      console.log('MA20 Table:', ma20Table);
-      console.log('MA50 Table:', ma50Table);
-
       // Join OHLC + MA20 first
       let joinedData = google.visualization.data.join(
         ohlcTable, 
@@ -54,9 +44,6 @@
         [1]               // keep MA20 (becomes column 5)
       );
 
-      console.log('After MA20 Join:', joinedData);
-      console.log('After MA20 Join Column Count:', joinedData.getNumberOfColumns());
-
       // Then join with MA50
       joinedData = google.visualization.data.join(
         joinedData,
@@ -66,9 +53,6 @@
         [1, 2, 3, 4, 5],  // keep Low, Open, Close, High, MA20
         [1]               // keep MA50 (becomes column 6)
       );
-
-      console.log('After MA50 Join:', joinedData);
-      console.log('After MA50 Join Column Count:', joinedData.getNumberOfColumns());
 
       const options = {
         backgroundColor: '#202b3a',
@@ -93,6 +77,7 @@
           width: '88%',
           height: '75%'
         },
+        interpolateNulls: true,
         seriesType: 'candlesticks',
         series: {
           0: { type: 'candlesticks', visibleInLegend: false },
@@ -137,14 +122,16 @@
       });
     });
     
-    let currentFix = <?= $fix ?? 200 ?>;
-    function updateFix(value) {
-      currentFix = value;
-      document.getElementById('fixValue').textContent = value;
-    }
+    let currentFix = <?= $days ?? 200 ?>;
+    let currentTimeframe = '<?= $timeframe ?? '12h' ?>';
 
     function openDatabase(coinId) {
-      window.location.href = '<?= site_url('/database/') ?>' + coinId + '/' + currentFix;
+      window.location.href = '<?= site_url('database/') ?>' + coinId + '/' + currentTimeframe + '/' + currentFix;
+    }
+
+    function openTimeframe(tf) {
+      currentTimeframe = tf;
+      window.location.href = '<?= site_url('database/') ?>' + '<?= $coin ?>' + '/' + tf + '/' + currentFix;
     }
   </script>
 </head>
@@ -193,9 +180,23 @@
     <?php endforeach; ?>
   </div>
 
+  <!-- Timeframe widgets -->
+  <div class="widget-container">
+    <?php
+      $timeframes = ['15m', '30m', '1h', '4h', '6h', '12h'];
+      foreach ($timeframes as $tf):
+    ?>
+      <button
+        class="crypto-widget-btn <?= ($timeframe == $tf) ? 'active' : '' ?>"
+        onclick="openTimeframe('<?= $tf ?>')">
+        <div class="crypto-title"><?= strtoupper($tf) ?></div>
+      </button>
+    <?php endforeach; ?>
+  </div>
+
   <!-- Search Form -->
   <div class="search-container">
-    <form action="<?= site_url('database/' . $coin . '/' . $days) ?>" method="post">
+    <form action="<?= site_url('database/' . $coin . '/' . $timeframe . '/' . $days) ?>" method="post">
       <input type="text" name="search_day" placeholder="Enter number of days" value="<?= esc($search_day) ?>">
       <button type="submit">Search</button>
     </form>
@@ -205,10 +206,11 @@
 
   <!-- Data Table -->
   <div class="table-container">
-    <table>
+    <table id="dataTable">
       <thead>
         <tr>
           <th>Coin</th>
+          <th>Timeframe</th>
           <th>Date</th>
           <th>Open Price</th>
           <th>Close Price</th>
@@ -224,6 +226,7 @@
         <?php foreach (array_reverse($record) as $item): ?>
           <tr>
             <td><?= $coinname ?></td>
+            <td><?= $timeframe ?></td>
             <td><?= $item['date'] ?></td>
             <td><?= $item['open_price'] ?></td>
             <td><?= $item['close_price'] ?></td>
@@ -238,6 +241,37 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Pagination -->
+  <div class="pagination-container">
+    <button id="prevPageBtn" onclick="showPage(currentPage - 1)" disabled>← Previous 50</button>
+    <span id="pageInfo"></span>
+    <button id="nextPageBtn" onclick="showPage(currentPage + 1)">Next 50 →</button>
+  </div>
+
+  <script>
+    const ROWS_PER_PAGE = 50;
+    let currentPage = 1;
+
+    function showPage(page) {
+      const rows = Array.from(document.querySelectorAll('#dataTable tbody tr'));
+      const totalPages = Math.max(1, Math.ceil(rows.length / ROWS_PER_PAGE));
+      page = Math.max(1, Math.min(page, totalPages));
+      currentPage = page;
+
+      const start = (page - 1) * ROWS_PER_PAGE;
+      rows.forEach((row, i) => {
+        row.style.display = (i >= start && i < start + ROWS_PER_PAGE) ? '' : 'none';
+      });
+
+      document.getElementById('prevPageBtn').disabled = (page === 1);
+      document.getElementById('nextPageBtn').disabled = (page === totalPages);
+      document.getElementById('pageInfo').textContent =
+        'Page ' + page + ' of ' + totalPages + ' (' + rows.length + ' records)';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() { showPage(1); });
+  </script>
 
   <!-- Footer -->
   <?= view('V_Footer') ?>
