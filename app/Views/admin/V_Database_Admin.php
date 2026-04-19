@@ -139,7 +139,7 @@
 
 
     <hr style="border: 0.5px solid #2a3d59; margin: 6px 0;">
-    <a href="/">Back</a>
+    <a href="<?= site_url('dashboard') ?>">Back</a>
   </div>
 
   <!-- Coin widgets -->
