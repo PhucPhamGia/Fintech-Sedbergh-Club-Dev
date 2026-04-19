@@ -1,8 +1,7 @@
 <?php
 
-// Handle database-related functions such as data import and retrieval
-
 namespace App\Controllers;
+
 use CodeIgniter\Controller;
 use App\Controllers\BaseController;
 use App\Models\M_Coin_Data;
@@ -10,430 +9,303 @@ use App\Models\M_Coin_Data;
 class C_Database extends BaseController
 {
     protected $M_Coin_Data;
+
+    // All supported timeframes — order determines import sequence
+    private const TIMEFRAMES = ['15m', '30m', '1h', '4h', '6h', '12h'];
+
     public function __construct()
     {
-        $this->M_Coin_Data = new M_Coin_Data(); // Call M_Coin_Data model by $this->M_Coin_Data->method()
+        $this->M_Coin_Data = new M_Coin_Data();
+    }
+
+    // Fetch one page (≤1000) of klines from Binance. Throws on network/API error.
+    private function fetchKlines(string $symbol, string $interval, int $startTime, int $endTime): array
+    {
+        $url = "https://api.binance.com/api/v3/klines"
+             . "?symbol={$symbol}&interval={$interval}"
+             . "&startTime={$startTime}&endTime={$endTime}&limit=1000";
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $response = curl_exec($ch);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        if ($response === false) {
+            throw new \RuntimeException("cURL Error: $curlError");
+        }
+        $data = json_decode($response, true);
+        if (isset($data['code'])) {
+            throw new \RuntimeException("Binance API Error [{$data['code']}]: {$data['msg']}");
+        }
+        return is_array($data) ? $data : [];
+    }
+
+    // Build the insert row array from a raw Binance kline entry.
+    private function buildRow(int $id_coin, string $timeframe, array $k): array
+    {
+        return [
+            'id_coin'            => $id_coin,
+            'timeframe'          => $timeframe,
+            'date'               => date('Y-m-d', $k[0] / 1000),
+            'open_time'          => $k[0],
+            'open_price'         => $k[1],
+            'high_price'         => $k[2],
+            'low_price'          => $k[3],
+            'close_price'        => $k[4],
+            'volume'             => $k[5],
+            'close_time'         => $k[6],
+            'quote_volume'       => $k[7],
+            'number_of_trades'   => $k[8],
+            'taker_base_volume'  => $k[9],
+            'taker_quote_volume' => $k[10],
+        ];
     }
 
     /**
-     * Binance_Import() - Import Historical Kline Data
-     * 
-     * PURPOSE: Import last 100 days of cryptocurrency kline data from Binance API at 12h intervals
-     * 
-     * FLOW:
-     * 1. Get all coins from tbl_coin via get_list_coin()
-     * 2. For each coin, construct Binance API URL with 100-day time range
-     * 3. Execute cURL request to https://api.binance.com/api/v3/klines
-     * 4. Validate cURL response and parse JSON
-     * 5. Check for Binance API errors (if response contains 'code' field)
-     * 6. For each kline in response:
-     *    - Extract date from open_time (milliseconds → Y-m-d format)
-     *    - Check if record already exists (duplicate prevention via date + id_coin + open_time)
-     *    - If not exists, insert all 13 kline fields into btcdatadb
-     * 7. Redirect to /database/1/50 with success message
-     * 
-     * API DETAILS:
-     * - Endpoint: https://api.binance.com/api/v3/klines
-     * - Symbol format: coinname (e.g., BTCUSDT)
-     * - Interval: 12h (12-hour candles)
-     * - Time range: Last 100 days (calculated via strtotime)
-     * - Response: Array of klines [open_time, open_price, high_price, low_price, close_price, volume, close_time, quote_volume, number_of_trades, taker_base_volume, taker_quote_volume, ...]
-     * 
-     * ERROR HANDLING:
-     * ✅ cURL failure detection: if ($response === false)
-     * ✅ API error detection: if (isset($klines['code']))
-     * ✅ Duplicate prevention: countAllResults() check before insert
-     * 
-     * DATABASE FIELDS INSERTED:
-     * id_coin, date, open_time, open_price, high_price, low_price, close_price, 
-     * volume, close_time, quote_volume, number_of_trades, taker_base_volume, taker_quote_volume
+     * Binance_Import() — Historical import: last 100 days, all 6 timeframes.
+     *
+     * Paginates Binance API in 1000-candle pages per (coin × timeframe) until
+     * the full 100-day window is covered. Uses INSERT IGNORE so re-running is safe.
      */
     public function Binance_Import()
     {
-        $data['coin_map'] = $this->M_Coin_Data->get_list_coin();
+        set_time_limit(0);
 
-        $M_Coin_Data = new M_Coin_Data();
-        foreach ($data['coin_map'] as $coin_item) {
-            $symbol = $coin_item['coinname'];
-            $interval = '12h';
-            $startTime = strtotime('-100 days') * 1000;
-            $endTime = round(microtime(true) * 1000);
+        $coins   = $this->M_Coin_Data->get_list_coin();
+        $M       = new M_Coin_Data();
+        $endTime = (int) round(microtime(true) * 1000);
 
-            $url = "https://api.binance.com/api/v3/klines?symbol=$symbol&interval=$interval&startTime=$startTime&endTime=$endTime&limit=1000";
-          
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        foreach ($coins as $coin) {
+            foreach (self::TIMEFRAMES as $timeframe) {
+                $startTime = strtotime('-100 days') * 1000;
 
-            $response = curl_exec($ch);
-            if ($response === false) {
-            $error = curl_error($ch);
-            curl_close($ch);
-            return $this->response->setStatusCode(500)->setJSON(['error' => "cURL Error: $error"]);
-            }
-            curl_close($ch);
-
-            $klines = json_decode($response, true);
-
-            if (isset($klines['code'])) {
-            return $this->response->setStatusCode(500)->setJSON(['error' => $klines['msg']]);
-            }
-
-            if (is_array($klines)) {
-            foreach ($klines as $kline) {
-                $date = date('Y-m-d', $kline[0] / 1000);
-                $exists = $M_Coin_Data->where('date', $date)
-                           ->where('id_coin', $coin_item['id_coin'])
-                           ->where('open_time', $kline[0]) 
-                           ->countAllResults();
-
-                if ($exists == 0) {
-                        $M_Coin_Data->insert([
-                            'id_coin'            => $coin_item['id_coin'],
-                            'date'               => $date,
-                            'open_time'          => $kline[0],
-                            'open_price'         => $kline[1],
-                            'high_price'         => $kline[2],
-                            'low_price'          => $kline[3],
-                            'close_price'        => $kline[4],
-                            'volume'             => $kline[5],
-                            'close_time'         => $kline[6],
-                            'quote_volume'       => $kline[7],
-                            'number_of_trades'   => $kline[8],
-                            'taker_base_volume'  => $kline[9],
-                            'taker_quote_volume' => $kline[10],
-                        ]);
+                while ($startTime < $endTime) {
+                    try {
+                        $klines = $this->fetchKlines($coin['coinname'], $timeframe, $startTime, $endTime);
+                    } catch (\RuntimeException $e) {
+                        return $this->response->setStatusCode(500)->setJSON(['error' => $e->getMessage()]);
                     }
+
+                    if (empty($klines)) break;
+
+                    $batch = [];
+                    foreach ($klines as $k) {
+                        $batch[] = $this->buildRow($coin['id_coin'], $timeframe, $k);
+                    }
+                    $M->insertBatchIgnore($batch);
+
+                    // Advance past the last candle's close_time; stop if page was incomplete
+                    $lastClose = (int) end($klines)[6];
+                    if (count($klines) < 1000 || $lastClose >= $endTime) break;
+                    $startTime = $lastClose + 1;
                 }
             }
         }
-        return redirect()->to('/database/1/50')->with('success', 'Data imported successfully to database!');
+
+        return redirect()->to('/database/1/50')->with('success', 'Historical data imported successfully!');
     }
 
     /**
-     * Binance_Daily_Import() - Import Today's Kline Data
-     * 
-     * PURPOSE: Import today's cryptocurrency kline data from Binance API at 12h intervals
-     * 
-     * FLOW:
-     * 1. Get all coins from tbl_coin via get_list_coin()
-     * 2. For each coin, construct Binance API URL with today's time range only
-     * 3. Execute cURL request to https://api.binance.com/api/v3/klines
-     * 4. Validate cURL response and parse JSON
-     * 5. Check for Binance API errors (if response contains 'code' field)
-     * 6. For each kline in response:
-     *    - Extract date from open_time (milliseconds → Y-m-d format)
-     *    - Check if record already exists (duplicate prevention via date + id_coin + open_time)
-     *    - If not exists, insert all 13 kline fields into btcdatadb
-     * 7. Redirect to database/1/50 with success message
-     * 
-     * API DETAILS:
-     * - Endpoint: https://api.binance.com/api/v3/klines
-     * - Symbol format: coinname (e.g., BTCUSDT)
-     * - Interval: 12h (12-hour candles)
-     * - Time range: Today only (from 00:00 UTC to current time)
-     * - Response: Array of klines [open_time, open_price, high_price, low_price, close_price, volume, close_time, quote_volume, number_of_trades, taker_base_volume, taker_quote_volume, ...]
-     * 
-     * ERROR HANDLING:
-     * ✅ cURL failure detection: if ($response === false)
-     * ✅ API error detection: if (isset($data['code']))
-     * ✅ Duplicate prevention: countAllResults() check before insert
-     * 
-     * DIFFERENCES FROM Binance_Import():
-     * - Time scope: Today only (strtotime('today midnight')) instead of last 100 days
-     * - Use case: Daily incremental updates instead of historical backfill
+     * Binance_Daily_Import() — Incremental import: today only, all 6 timeframes.
+     *
+     * Max candles per (coin × timeframe) today: 96 (15m) — always fits in one request.
+     * Uses INSERT IGNORE so running multiple times per day is safe.
      */
     public function Binance_Daily_Import()
     {
-        $data['coin_map'] = $this->M_Coin_Data->get_list_coin();
+        $coins     = $this->M_Coin_Data->get_list_coin();
+        $M         = new M_Coin_Data();
+        $startTime = strtotime('today midnight') * 1000;
+        $endTime   = (int) round(microtime(true) * 1000);
 
-        $M_Coin_Data = new M_Coin_Data();
-        foreach ($data['coin_map'] as $coin_item) {
-            $symbol = $coin_item['coinname'];
-            $interval = '12h';
-            $startTime = strtotime('today midnight') * 1000;
-            $endTime = round(microtime(true) * 1000);
-
-            $url = "https://api.binance.com/api/v3/klines?symbol=$symbol&interval=$interval&startTime=$startTime&endTime=$endTime&limit=1000";
-          
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-            $response = curl_exec($ch);
-            if ($response === false) {
-            $error = curl_error($ch);
-            return $this->response->setStatusCode(500)->setJSON(['error' => "cURL Error: $error"]);
-            }
-
-            $data = json_decode($response, true);
-
-            if (isset($data['code'])) {
-            return $this->response->setStatusCode(500)->setJSON(['error' => $data['msg']]);
-            }
-
-            if (is_array($data)) {
-            foreach ($data as $kline) {
-                $date = date('Y-m-d', $kline[0] / 1000);
-                $exists = $M_Coin_Data->where('date', $date)
-                           ->where('id_coin', $coin_item['id_coin'])
-                           ->where('open_time', $kline[0]) 
-                           ->countAllResults();
-
-                if ($exists == 0) {
-                        $M_Coin_Data->insert([
-                            'id_coin'            => $coin_item['id_coin'],
-                            'date'               => $date,
-                            'open_time'          => $kline[0],
-                            'open_price'         => $kline[1],
-                            'high_price'         => $kline[2],
-                            'low_price'          => $kline[3],
-                            'close_price'        => $kline[4],
-                            'volume'             => $kline[5],
-                            'close_time'         => $kline[6],
-                            'quote_volume'       => $kline[7],
-                            'number_of_trades'   => $kline[8],
-                            'taker_base_volume'  => $kline[9],
-                            'taker_quote_volume' => $kline[10],
-                        ]);
-                    }
+        foreach ($coins as $coin) {
+            foreach (self::TIMEFRAMES as $timeframe) {
+                try {
+                    $klines = $this->fetchKlines($coin['coinname'], $timeframe, $startTime, $endTime);
+                } catch (\RuntimeException $e) {
+                    return $this->response->setStatusCode(500)->setJSON(['error' => $e->getMessage()]);
                 }
+
+                if (empty($klines)) continue;
+
+                $batch = [];
+                foreach ($klines as $k) {
+                    $batch[] = $this->buildRow($coin['id_coin'], $timeframe, $k);
+                }
+                $M->insertBatchIgnore($batch);
             }
         }
-        return redirect()->to('database/1/50')->with('success', 'Data imported successfully to database!');
+
+        return redirect()->to('database/1/50')->with('success', 'Daily data imported successfully!');
     }
 
     /**
-     * MA20() - Calculate 20-Period Moving Average
-     * 
-     * PURPOSE: Calculate 20-period moving average (MA20) for all coins and update btcdatadb
-     * 
-     * ALGORITHM:
-     * 1. Get all coins from tbl_coin
-     * 2. For each coin:
-     *    - Fetch all kline records sorted by open_time ASC (oldest → newest)
-     *    - Skip if less than 41 records (need 40 candles for first MA calculation)
-     *    - Initialize sliding window (array) and sum accumulator
-     * 3. For each record in sorted klines:
-     *    - When window reaches 40 elements:
-     *      • Calculate MA20 = sum / 40 (rounded to 8 decimals)
-     *      • If MA20 differs from current value, add to updates batch
-     *    - Add current close_price to window and sum
-     *    - If window exceeds 40 elements, remove oldest (shift) and subtract from sum
-     * 4. Batch update all changed records via updateBatch()
-     * 5. Redirect to database/1/50 with success message
-     * 
-     * MOVING AVERAGE DETAILS:
-     * - Window size: 40 candles (represents 20 periods at 12h intervals = 10 days of data)
-     * - Calculation: SUM(close_price of 40 candles) / 40
-     * - Update condition: Only update if new MA20 ≠ stored MA20 (optimizes DB writes)
-     * - Precision: Rounded to 8 decimal places
-     * 
-     * PERFORMANCE OPTIMIZATION:
-     * ✅ Sliding window technique (O(n) instead of O(n²))
-     * ✅ Batch updates (single query instead of N queries)
-     * ✅ Conditional updates (skip if value unchanged)
-     * ✅ Early skip (continue if insufficient data)
+     * MA20() — 20-period MA for all coins across all timeframes.
+     *
+     * Window = 40 candles (20 periods × 2 candles per period at 12h).
+     * For shorter timeframes the window covers less calendar time but the same
+     * number of candles — consistent with how MA20 is typically defined (period count).
      */
     public function MA20()
     {
         $btcModel = new M_Coin_Data();
-        $data['coin_map'] = $this->M_Coin_Data->get_list_coin();
+        $coins    = $this->M_Coin_Data->get_list_coin();
 
-        foreach ($data['coin_map'] as $c) {
-            $rows = $btcModel->where('id_coin', $c['id_coin'])
-                             ->orderBy('open_time', 'ASC')
-                             ->findAll();
+        foreach ($coins as $c) {
+            foreach (self::TIMEFRAMES as $timeframe) {
+                $rows = $btcModel->where('id_coin', $c['id_coin'])
+                                 ->where('timeframe', $timeframe)
+                                 ->orderBy('open_time', 'ASC')
+                                 ->findAll();
 
-            if (count($rows) < 41) continue;
+                if (count($rows) < 41) continue;
 
-            $window = [];
-            $sum = 0.0;
-            $updates = [];
+                $window  = [];
+                $sum     = 0.0;
+                $updates = [];
 
-            foreach ($rows as $i => $row) {
-                if (count($window) == 40) {
-                    $ma = round($sum / 40, 8);
-                    if ((float)$row['ma20'] !== $ma) {
-                        $updates[] = ['id' => $row['id'], 'ma20' => $ma];
+                foreach ($rows as $row) {
+                    if (count($window) == 40) {
+                        $ma = round($sum / 40, 8);
+                        if ((float)$row['ma20'] !== $ma) {
+                            $updates[] = ['id' => $row['id'], 'ma20' => $ma];
+                        }
+                    }
+                    $close    = (float)$row['close_price'];
+                    $window[] = $close;
+                    $sum     += $close;
+                    if (count($window) > 40) {
+                        $sum -= array_shift($window);
                     }
                 }
-                $close = (float)$row['close_price'];
-                $window[] = $close;
-                $sum += $close;
 
-                if (count($window) > 40) {
-                    $sum -= array_shift($window);
+                if (!empty($updates)) {
+                    $btcModel->updateBatch($updates, 'id');
                 }
             }
-            if (!empty($updates)) {
-                $btcModel->updateBatch($updates, 'id');
-            }
         }
-        return redirect()->to('database/1/50')->with('success', 'Data imported successfully to database!');
+
+        return redirect()->to('database/1/50')->with('success', 'MA20 calculated successfully!');
     }
 
     /**
-     * MA50() - Calculate 50-Period Moving Average
-     * 
-     * PURPOSE: Calculate 50-period moving average (MA50) for all coins and update btcdatadb
-     * 
-     * ALGORITHM:
-     * 1. Get all coins from tbl_coin
-     * 2. For each coin:
-     *    - Fetch all kline records sorted by open_time ASC (oldest → newest)
-     *    - Skip if less than 101 records (need 100 candles for first MA calculation)
-     *    - Initialize sliding window (array) and sum accumulator
-     * 3. For each record in sorted klines:
-     *    - When window reaches 100 elements:
-     *      • Calculate MA50 = sum / 100 (rounded to 8 decimals)
-     *      • If MA50 differs from current value, add to updates batch
-     *    - Add current close_price to window and sum
-     *    - If window exceeds 100 elements, remove oldest (shift) and subtract from sum
-     * 4. Batch update all changed records via updateBatch()
-     * 5. Redirect to database/1/50 with success message
-     * 
-     * MOVING AVERAGE DETAILS:
-     * - Window size: 100 candles (represents 50 periods at 12h intervals = 25 days of data)
-     * - Calculation: SUM(close_price of 100 candles) / 100
-     * - Update condition: Only update if new MA50 ≠ stored MA50 (optimizes DB writes)
-     * - Precision: Rounded to 8 decimal places
-     * 
-     * PERFORMANCE OPTIMIZATION:
-     * ✅ Sliding window technique (O(n) instead of O(n²))
-     * ✅ Batch updates (single query instead of N queries)
-     * ✅ Conditional updates (skip if value unchanged)
-     * ✅ Early skip (continue if insufficient data)
-     * 
-     * STATUS: WIP (Work In Progress) - Functional but may need optimization for large datasets
+     * MA50() — 50-period MA for all coins across all timeframes.
+     *
+     * Window = 100 candles (50 periods).
      */
     public function MA50()
     {
         $btcModel = new M_Coin_Data();
-        $data['coin_map'] = $this->M_Coin_Data->get_list_coin();
+        $coins    = $this->M_Coin_Data->get_list_coin();
 
-        foreach ($data['coin_map'] as $c) {
-            $coin = $c['id_coin'];
-            $rows = $btcModel->where('id_coin', $coin)
-                             ->orderBy('open_time', 'ASC')
-                             ->findAll();
+        foreach ($coins as $c) {
+            foreach (self::TIMEFRAMES as $timeframe) {
+                $rows = $btcModel->where('id_coin', $c['id_coin'])
+                                 ->where('timeframe', $timeframe)
+                                 ->orderBy('open_time', 'ASC')
+                                 ->findAll();
 
-            if (count($rows) < 101) continue;
+                if (count($rows) < 101) continue;
 
-            $window = [];
-            $sum = 0.0;
-            $updates = [];
+                $window  = [];
+                $sum     = 0.0;
+                $updates = [];
 
-            foreach ($rows as $i => $row) {
-                if (count($window) == 100) {
-                    $ma = round($sum / 100, 8);
-                    if ((float)$row['ma50'] !== $ma) {
-                        $updates[] = ['id' => $row['id'], 'ma50' => $ma];
+                foreach ($rows as $row) {
+                    if (count($window) == 100) {
+                        $ma = round($sum / 100, 8);
+                        if ((float)$row['ma50'] !== $ma) {
+                            $updates[] = ['id' => $row['id'], 'ma50' => $ma];
+                        }
+                    }
+                    $close    = (float)$row['close_price'];
+                    $window[] = $close;
+                    $sum     += $close;
+                    if (count($window) > 100) {
+                        $sum -= array_shift($window);
                     }
                 }
-                $close = (float)$row['close_price'];
-                $window[] = $close;
-                $sum += $close;
 
-                if (count($window) > 100) {
-                    $sum -= array_shift($window);
+                if (!empty($updates)) {
+                    $btcModel->updateBatch($updates, 'id');
                 }
             }
-            if (!empty($updates)) {
-                $btcModel->updateBatch($updates, 'id');
-            }
         }
-        return redirect()->to('database/1/50')->with('success', 'Data imported successfully to database!');
+
+        return redirect()->to('database/1/50')->with('success', 'MA50 calculated successfully!');
     }
 
-    // Find records where MA20 and MA50 are within a given percent of each other (default 5%).
-    // Optional parameters:
-    //  - $id_coin: filter for a specific coin id
-    //  - $startDate/$endDate: date range in a parsable format (e.g. '2025-01-01')
-    //  - $saveToDb: if true, writes a flag column `ma20_ma50_close` = 1 for matching rows (column must exist)
-    public function MA20_MA50_Close($percent = 5, $id_coin = null, $startDate = null, $endDate = null, $saveToDb = false)
+    // Find records where MA20, MA50, and close_price are all within $percent of each other.
+    // Optional filters: $id_coin, $startDate/$endDate, $timeframe.
+    // If $saveToDb=true, writes crossed_ma20_ma50=1 for matching rows.
+    public function MA20_MA50_Close($percent = 5, $id_coin = null, $startDate = null, $endDate = null, $saveToDb = false, $timeframe = '12h')
     {
         $percent = (float) $percent;
-        $model = new M_Coin_Data();
+        $model   = new M_Coin_Data();
 
-        // Build coin list to iterate
-        if (!empty($id_coin)) {
-            $coin_map = [['id_coin' => $id_coin]];
-        } else {
-            $coin_map = $this->M_Coin_Data->get_list_coin();
-        }
+        $coin_map = !empty($id_coin)
+            ? [['id_coin' => $id_coin]]
+            : $this->M_Coin_Data->get_list_coin();
 
         $matches = [];
         $updates = [];
 
         foreach ($coin_map as $c) {
-            $query = $model->where('id_coin', $c['id_coin'])->orderBy('open_time', 'ASC');
+            $query = $model->where('id_coin', $c['id_coin'])
+                           ->where('timeframe', $timeframe)
+                           ->orderBy('open_time', 'ASC');
 
-            if (!empty($startDate)) {
-                $sd = date('Y-m-d', strtotime($startDate));
-                $query->where('date >=', $sd);
-            }
-            if (!empty($endDate)) {
-                $ed = date('Y-m-d', strtotime($endDate));
-                $query->where('date <=', $ed);
-            }
+            if (!empty($startDate)) $query->where('date >=', date('Y-m-d', strtotime($startDate)));
+            if (!empty($endDate))   $query->where('date <=', date('Y-m-d', strtotime($endDate)));
 
-            $rows = $query->findAll();
-
-            foreach ($rows as $row) {
-                $ma20 = isset($row['ma20']) ? (float) $row['ma20'] : 0.0;
-                $ma50 = isset($row['ma50']) ? (float) $row['ma50'] : 0.0;
-                $close = isset($row['close_price']) ? (float) $row['close_price'] : 0.0;
+            foreach ($query->findAll() as $row) {
+                $ma20  = (float)($row['ma20'] ?? 0);
+                $ma50  = (float)($row['ma50'] ?? 0);
+                $close = (float)($row['close_price'] ?? 0);
 
                 if ($ma20 <= 0 || $ma50 <= 0 || $close <= 0) continue;
 
                 $avg = ($ma20 + $ma50 + $close) / 3.0;
                 if ($avg == 0) continue;
 
-                $diffPercent_ma20 = abs($ma20 - $avg) / $avg * 100.0;
-                $diffPercent_ma50 = abs($ma50 - $avg) / $avg * 100.0;
-                $diffPercent_close = abs($close - $avg) / $avg * 100.0;
-
-                $is_within_range = ($diffPercent_ma20 <= $percent) && ($diffPercent_ma50 <= $percent) && ($diffPercent_close <= $percent);
-
-                if ($is_within_range) {
+                if (
+                    abs($ma20 - $avg) / $avg * 100 <= $percent &&
+                    abs($ma50 - $avg) / $avg * 100 <= $percent &&
+                    abs($close - $avg) / $avg * 100 <= $percent
+                ) {
                     $matches[] = [
-                        'id' => $row['id'],
-                        'id_coin' => $c['id_coin'],
-                        'coinname' => isset($c['coinname']) ? $c['coinname'] : null,
-                        'date' => $row['date'],
-                        'open_time' => $row['open_time'],
-                        'ma20' => $ma20,
-                        'ma50' => $ma50,
-                        'close_price' => $close,
-                        'avg' => round($avg, 8),
-                        'is_within_5_percent' => true,
+                        'id'         => $row['id'],
+                        'id_coin'    => $c['id_coin'],
+                        'coinname'   => $c['coinname'] ?? null,
+                        'timeframe'  => $row['timeframe'],
+                        'date'       => $row['date'],
+                        'open_time'  => $row['open_time'],
+                        'ma20'       => $ma20,
+                        'ma50'       => $ma50,
+                        'close_price'=> $close,
+                        'avg'        => round($avg, 8),
                     ];
-
                     if ($saveToDb) {
-                        $updates[] = [
-                            'id' => $row['id'],
-                            'ma20_ma50_close' => 1,
-                        ];
+                        $updates[] = ['id' => $row['id'], 'crossed_ma20_ma50' => 1];
                     }
                 }
             }
         }
 
         if ($saveToDb && !empty($updates)) {
-            // Note: table must have column `ma20_ma50_close` (tinyint/boolean)
             $model->updateBatch($updates, 'id');
         }
 
         return $this->response->setJSON([
-            'percent' => $percent,
-            'id_coin' => $id_coin,
+            'percent'   => $percent,
+            'timeframe' => $timeframe,
+            'id_coin'   => $id_coin,
             'startDate' => $startDate,
-            'endDate' => $endDate,
-            'saved' => $saveToDb ? count($updates) : 0,
-            'matches' => $matches,
+            'endDate'   => $endDate,
+            'saved'     => $saveToDb ? count($updates) : 0,
+            'matches'   => $matches,
         ]);
     }
 }
-
-

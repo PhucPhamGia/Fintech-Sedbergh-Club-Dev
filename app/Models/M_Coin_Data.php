@@ -5,23 +5,24 @@ use CodeIgniter\Model;
 
 class M_Coin_Data extends Model
 {
-    protected $table = 'btcdatadb'; // default table
+    protected $table = 'btcdatadb';
 
     protected $table_btcdatadb = 'btcdatadb';
     protected $table_tbl_coin = 'tbl_coin';
 
     protected $primaryKey = 'id';
     protected $allowedFields = [
-    'id', 'date', 'id_coin', 'open_time', 'open_price', 'high_price', 'low_price',
-    'close_price', 'volume', 'close_time', 'quote_volume',
-    'number_of_trades', 'taker_base_volume', 'taker_quote_volume',
-    'ma20', 'ma50'];
+        'id', 'id_coin', 'timeframe', 'date', 'open_time',
+        'open_price', 'high_price', 'low_price', 'close_price',
+        'volume', 'close_time', 'quote_volume',
+        'number_of_trades', 'taker_base_volume', 'taker_quote_volume',
+        'ma20', 'ma50', 'crossed_ma20_ma50',
+    ];
 
-    function get_list_coin()
+    public function get_list_coin()
     {
-      return  $this->db->table($this->table_tbl_coin)
-      ->get()->getResultArray();
-	  }
+        return $this->db->table($this->table_tbl_coin)->get()->getResultArray();
+    }
 
     public function get_coinname_by_id($id_coin)
     {
@@ -32,49 +33,62 @@ class M_Coin_Data extends Model
             ->getRow('coinname');
     }
 
-
-    function get_all_data()
+    public function get_all_data()
     {
-      return $this->table($this->table_btcdatadb)->findAll();
+        return $this->table($this->table_btcdatadb)->findAll();
     }
 
-    function get_data_by_coin_id($coin_id, $number_of_records)
+    public function get_data_by_coin_id($coin_id, $number_of_records, $timeframe = '12h')
     {
-      return $this->where('id_coin', $coin_id)
-          ->orderBy('open_time', 'ASC')
-          ->findAll($number_of_records);
+        return $this->where('id_coin', $coin_id)
+            ->where('timeframe', $timeframe)
+            ->orderBy('open_time', 'ASC')
+            ->findAll($number_of_records);
     }
 
-    function get_data_for_candlestickchart($id_coin, int $limit)
+    public function get_data_for_candlestickchart($id_coin, int $limit, $timeframe = '12h')
     {
-      $limit = (int)$limit;
-      return $this->select('date, open_price, high_price, low_price, close_price')
-        ->where('id_coin', $id_coin)
-        ->orderBy('open_time', 'DESC')
-        ->findAll($limit);
+        $limit = (int)$limit;
+        return $this->select('date, open_price, high_price, low_price, close_price')
+            ->where('id_coin', $id_coin)
+            ->where('timeframe', $timeframe)
+            ->orderBy('open_time', 'DESC')
+            ->findAll($limit);
     }
 
-    function get_data_by_coin_id_n_day($coin_id, $days)
+    public function get_data_by_coin_id_n_day($coin_id, $days, $timeframe = '12h')
     {
-      $days = (int)$days;
-      $milliseconds_in_a_day = 86400000;
-      $current_time_milliseconds = round(microtime(true) * 1000);
-      $start_time = $current_time_milliseconds - ($days * $milliseconds_in_a_day);
-
-      return $this->where('id_coin', $coin_id)
-          ->where('open_time >=', $start_time)
-          ->orderBy('open_time', 'ASC')
-          ->findAll();
+        $days = (int)$days;
+        $start = round(microtime(true) * 1000) - ($days * 86400000);
+        return $this->where('id_coin', $coin_id)
+            ->where('timeframe', $timeframe)
+            ->where('open_time >=', $start)
+            ->orderBy('open_time', 'ASC')
+            ->findAll();
     }
 
-    function get_ma20(int $limit , $coin_id)
+    public function get_ma20(int $limit, $coin_id, $timeframe = '12h')
     {
-
-      return $this->select('date, ma20, ma50')
-          ->where('id_coin', $coin_id)
-          ->orderBy('open_time', 'DESC')
-          ->findAll($limit);
+        return $this->select('date, ma20, ma50')
+            ->where('id_coin', $coin_id)
+            ->where('timeframe', $timeframe)
+            ->orderBy('open_time', 'DESC')
+            ->findAll($limit);
     }
 
-    
+    // Single query: INSERT IGNORE INTO btcdatadb (...) VALUES (...),(...),...
+    // Uses DB-level unique key (id_coin, timeframe, open_time) to skip duplicates.
+    public function insertBatchIgnore(array $rows): void
+    {
+        if (empty($rows)) return;
+        $fields   = array_keys($rows[0]);
+        $cols     = implode(', ', array_map(fn($f) => "`$f`", $fields));
+        $ph       = '(' . implode(', ', array_fill(0, count($fields), '?')) . ')';
+        $values   = implode(', ', array_fill(0, count($rows), $ph));
+        $bindings = [];
+        foreach ($rows as $row) {
+            foreach ($row as $v) $bindings[] = $v;
+        }
+        $this->db->query("INSERT IGNORE INTO `{$this->table}` ($cols) VALUES $values", $bindings);
+    }
 }
