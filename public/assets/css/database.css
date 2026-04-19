@@ -93,6 +93,24 @@ body {
     color: #fff;
 }
 
+.simple-btn {
+    width: 85%;
+    padding: 10px 0;
+    background: #ff595e;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin: 6px 12px;
+    box-sizing: border-box;
+}
+
+.simple-btn:hover {
+    background: #d5464a;
+}
+
 .circle-menu-wrapper {
     position: relative;
     display: flex;

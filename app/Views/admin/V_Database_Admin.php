@@ -52,6 +52,7 @@
           width: '88%',
           height: '75%'
         },
+        interpolateNulls: true,
         seriesType: 'candlesticks',
         series: {
           0: { type: 'candlesticks', visibleInLegend: false },
