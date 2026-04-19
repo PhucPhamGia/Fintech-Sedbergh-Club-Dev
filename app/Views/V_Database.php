@@ -1,10 +1,11 @@
+<!-- SOURCE_CHECK_v2 -->
 <!DOCTYPE HTML>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Database</title>
-  <link rel="stylesheet" href="<?= base_url('assets/css/database.css') ?>">
+  <link rel="stylesheet" href="<?= base_url('assets/css/database.css') ?>?v=2">
 
   <!-- Google Charts Script For Candle Chart -->
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
