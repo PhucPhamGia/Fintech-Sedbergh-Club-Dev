@@ -168,9 +168,8 @@
 
   <!-- Circle Dropdown Content -->
   <div class="circle-dropdown" id="circleDropdown">
-      <hr style="border: 0.5px solid #2a3d59; margin: 6px 0;">
-      <a href="<?= site_url('dashboard') ?>">Back</a>
-    </div>
+    <hr style="border: 0.5px solid #2a3d59; margin: 6px 0;">
+    <a href="<?= site_url('dashboard') ?>">Back</a>
   </div>
 
   <!-- Coin widgets -->
@@ -201,7 +200,7 @@
     </form>
   </div>
 
-  <div id="chart_div" class="chart-container" style="width: 900px; height: 500px;"></div>
+  <div id="chart_div" class="chart-container"></div>
 
   <!-- Data Table -->
   <div class="table-container">
