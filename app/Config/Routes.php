@@ -10,6 +10,10 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+# Redirect /public/* to /*
+$routes->addRedirect('public/(:any)', '$1', 301);
+$routes->addRedirect('public', '/', 301);
+
 # User
 # Home
 $routes->get('/', 'C_View::Home');
