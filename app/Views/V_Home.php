@@ -164,6 +164,73 @@
     .nav-cta { margin-left: auto; display: flex; gap: 10px; align-items: center; }
     .nav-cta .btn-ghost { padding: 8px 16px; }
     .nav-cta .btn-primary { padding: 8px 16px; }
+    .btn-theme {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: border-color .15s, color .15s;
+    }
+    .btn-theme:hover { border-color: rgba(255,255,255,.35); color: #fff; }
+    .btn-theme svg { width: 16px; height: 16px; }
+    .btn-theme .icon-sun { display: none; }
+    html[data-theme="light"] .btn-theme .icon-moon { display: none; }
+    html[data-theme="light"] .btn-theme .icon-sun  { display: block; }
+
+    /* ── Light mode ────────────────────────────────────────────── */
+    html[data-theme="light"] {
+        --bg:      #f1f5f9;
+        --surface: rgba(15,23,42,0.05);
+        --border:  rgba(15,23,42,0.12);
+        --muted:   rgba(15,23,42,0.5);
+    }
+    html[data-theme="light"] body {
+        background-color: #f1f5f9;
+        color: #0f172a;
+    }
+    html[data-theme="light"] .nav {
+        background: rgba(241,245,249,0.92);
+        box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    html[data-theme="light"] .btn-ghost {
+        color: rgba(15,23,42,.65);
+    }
+    html[data-theme="light"] .btn-ghost:hover {
+        border-color: rgba(0,0,0,0.3);
+        color: #0f172a;
+    }
+    html[data-theme="light"] .btn-theme:hover {
+        border-color: rgba(0,0,0,0.25);
+        color: #0f172a;
+    }
+    html[data-theme="light"] .market-table thead {
+        background: rgba(15,23,42,0.04);
+    }
+    html[data-theme="light"] .ticker-strip {
+        background: rgba(15,23,42,0.03);
+    }
+    html[data-theme="light"] .nav-logo {
+        color: #0f172a;
+    }
+    html[data-theme="light"] .nav-links a:hover {
+        color: #0f172a;
+    }
+    html[data-theme="light"] .footer-logo {
+        color: #0f172a;
+    }
+    html[data-theme="light"] .footer-col a {
+        color: rgba(15,23,42,.55);
+    }
+    html[data-theme="light"] .footer-col a:hover {
+        color: #0f172a;
+    }
 
     /* ── Hero UI ───────────────────────────────────────────── */
     .hero {
@@ -275,18 +342,6 @@
     .achievements {
         padding: 64px 0;
         border-bottom: 1px solid var(--border);
-    }
-    .stats-wrap {
-        position: relative;
-    }
-    .stats-shadow {
-        position: absolute;
-        inset: 0;
-        background: rgba(0,0,0,0.5);
-        border-radius: var(--radius);
-        filter: blur(6px);
-        transform: translateY(14px) scale(0.98);
-        pointer-events: none;
     }
     .stats-grid {
         display: grid;
@@ -585,6 +640,14 @@
                 <div class="nav-cta">
                     <a href="/login" class="btn-ghost">Log in</a>
                     <a href="/register" class="btn-primary">Get Started</a>
+                    <button id="theme-toggle" class="btn-theme" aria-label="Toggle theme">
+                        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+                        </svg>
+                        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                        </svg>
+                    </button>
                 </div>
             </div>
         </nav>
@@ -631,8 +694,6 @@
         <!-- Achievements / Awards -->
         <section class="achievements" id="achievements">
             <div class="container">
-                <div class="stats-wrap">
-                <div class="stats-shadow"></div>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-value">$10Qn+</div>
@@ -820,7 +881,7 @@
                 <div class="footer-top">
                     <div class="footer-brand">
                         <span class="footer-logo">GiaPhuc</span>
-                        <p>A cryptocurrency data analysis platform powered by Binance API and CodeIgniter 4. Built for traders who think in data.</p>
+                        <p>A cryptocurrency data analysis platform powered by Binance API. Built for traders who think in data.</p>
                     </div>
                     <div class="footer-links">
                         <div class="footer-col">
@@ -837,7 +898,7 @@
                     </div>
                 </div>
                 <div class="footer-bottom">
-                    <p>&copy; 2024 GiaPhuc. All rights reserved.</p>
+                    <p>&copy; 2026 GiaPhuc. All rights reserved.</p>
                     <p>Live: <a href="https://giaphuc.thuytrieu.vn/public" target="_blank">giaphuc.thuytrieu.vn</a></p>
                 </div>
             </div>
@@ -902,8 +963,6 @@
 
         const heroGlow    = document.querySelector('.hero-bg-glow');
         const heroCanvas  = document.getElementById('hero-canvas');
-        const statsGrid   = document.querySelector('.stats-grid');
-        const statsShadow = document.querySelector('.stats-shadow');
 
         // ── Particle network ──────────────────────────────────────
         (function initNetwork() {
@@ -982,8 +1041,6 @@
         lenis.on('scroll', ({ scroll }) => {
             if (heroGlow)   heroGlow.style.transform   = `translateX(-50%) translateY(${scroll * 0.4}px)`;
             if (heroCanvas) heroCanvas.style.transform = `translateY(${scroll * 0.15}px)`;
-            if (statsGrid)   statsGrid.style.transform   = `translateY(${scroll * 0.05}px)`;
-            if (statsShadow) statsShadow.style.transform = `translateY(${16 + scroll * 0.02}px) scale(0.96)`;
 
             if (scroll > 80) {
                 nav.classList.toggle('nav--hidden', scroll > lastScroll);
@@ -999,6 +1056,17 @@
             btn.closest('.faq-item').classList.toggle('open');
         });
     });
+
+    (function initTheme() {
+        const html = document.documentElement;
+        const btn  = document.getElementById('theme-toggle');
+        html.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+        btn.addEventListener('click', () => {
+            const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        });
+    })();
     </script>
 
     <script type="module">
