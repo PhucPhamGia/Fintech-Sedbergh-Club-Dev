@@ -625,7 +625,7 @@
         <!-- Nav -->
         <nav class="nav">
             <div class="nav-inner">
-                <a href="/" class="nav-logo">
+                <a href="<?= site_url('/') ?>" class="nav-logo">
                     <!-- Logo (Hero Icon's Euro symbol) -->
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M14.121 7.629A3 3 0 0 0 9.017 9.43c-.023.212-.002.425.028.636l.506 3.541a4.5 4.5 0 0 1-.43 2.65L9 16.5l1.539-.513a2.25 2.25 0 0 1 1.422 0l.655.218a2.25 2.25 0 0 0 1.718-.122L15 15.75" />
@@ -638,8 +638,8 @@
                     <a href="#faq">FAQ</a>
                 </div>
                 <div class="nav-cta">
-                    <a href="/login" class="btn-ghost">Log in</a>
-                    <a href="/register" class="btn-primary">Get Started</a>
+                    <a href="<?= site_url('login') ?>" class="btn-ghost">Log in</a>
+                    <a href="<?= site_url('register') ?>" class="btn-primary">Get Started</a>
                     <button id="theme-toggle" class="btn-theme" aria-label="Toggle theme">
                         <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
@@ -671,8 +671,8 @@
                     Real-time market intelligence for serious traders.
                 </p>
                 <div class="hero-actions">
-                    <a href="/register" class="btn-primary">Start for Free &rarr;</a>
-                    <a href="/dashboard" class="btn-ghost">View Dashboard</a>
+                    <a href="<?= site_url('register') ?>" class="btn-primary">Start for Free &rarr;</a>
+                    <a href="<?= site_url('dashboard') ?>" class="btn-ghost">View Dashboard</a>
                 </div>
             </div>
             <!-- Ticker strip -->
@@ -838,7 +838,7 @@
                     </table>
                 </div>
                 <div class="market-cta">
-                    <a href="/dashboard" class="btn-primary">View Full Dashboard &rarr;</a>
+                    <a href="<?= site_url('dashboard') ?>" class="btn-primary">View Full Dashboard &rarr;</a>
                 </div>
             </div>
         </section>
@@ -886,14 +886,14 @@
                     <div class="footer-links">
                         <div class="footer-col">
                             <h4>Platform</h4>
-                            <a href="/dashboard">Dashboard</a>
-                            <a href="/database">Database</a>
-                            <a href="/importbinance">Import Data</a>
+                            <a href="<?= site_url('dashboard') ?>">Dashboard</a>
+                            <a href="<?= site_url('database') ?>">Database</a>
+                            <a href="<?= site_url('importbinance') ?>">Import Data</a>
                         </div>
                         <div class="footer-col">
                             <h4>Account</h4>
-                            <a href="/login">Log In</a>
-                            <a href="/register">Register</a>
+                            <a href="<?= site_url('login') ?>">Log In</a>
+                            <a href="<?= site_url('register') ?>">Register</a>
                         </div>
                     </div>
                 </div>
