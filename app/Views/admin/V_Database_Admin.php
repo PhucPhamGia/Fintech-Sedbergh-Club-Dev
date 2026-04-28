@@ -47,10 +47,10 @@
         },
         chartArea: {
           backgroundColor: '#202b3a',
-          left: 60,
+          left: 65,
+          right: 20,
           top: 40,
-          width: '88%',
-          height: '75%'
+          bottom: 60,
         },
         interpolateNulls: true,
         seriesType: 'candlesticks',
@@ -90,7 +90,7 @@
       });
     });
     
-    let currentFix = <?= $days ?? 200 ?>;
+    let currentFix = <?= $days ?? 100 ?>;
     let currentTimeframe = '<?= $timeframe ?? '12h' ?>';
 
     function openDatabase(coinId) {
@@ -136,6 +136,9 @@
     </form>
     <form action="<?= site_url('importma50') ?>" method="post" style="margin: 0;">
       <button type="submit" class="simple-btn">Calculate MA50</button>
+    </form>
+    <form action="<?= site_url('importpsar') ?>" method="post" style="margin: 0;">
+      <button type="submit" class="simple-btn">Calculate PSAR (5 sets)</button>
     </form>
 
 
