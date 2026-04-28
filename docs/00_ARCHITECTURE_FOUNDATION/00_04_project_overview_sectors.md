@@ -1,8 +1,8 @@
-# Project Overview & Sectors — CI4 Crypto Data Analysis
+# Project Overview & Sectors — Featherlight
 
 ## **Global Context**
 
-[giaphuc.thuytrieu.vn](http://giaphuc.thuytrieu.vn) is a foundation website to reach a final program that could automatically trade cryptocurrency to generate money. 
+**Featherlight** ([giaphuc.thuytrieu.vn](http://giaphuc.thuytrieu.vn)) is a foundation website to reach a final program that could automatically trade cryptocurrency to generate money. 
 
 **Primary Goals**:
 - Build developer skills
