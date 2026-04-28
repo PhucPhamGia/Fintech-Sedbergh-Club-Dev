@@ -11,8 +11,8 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 # Redirect /public/* to /*
-$routes->addRedirect('public/(:any)', '$1', 301);
-$routes->addRedirect('public', '/', 301);
+$routes->get('public/(:any)', 'C_View::Public_Redirect/$1');
+$routes->get('public', 'C_View::Public_Redirect');
 
 # User
 # Home

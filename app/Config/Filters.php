@@ -37,6 +37,7 @@ class Filters extends BaseFilters
         'rememberme'    => \App\Filters\RememberMe::class,
         'auth'          => \App\Filters\AuthFilter::class,
         'admin'         => \App\Filters\AdminFilter::class,
+        'publicpath'    => \App\Filters\PublicPathFilter::class,
     ];
 
     /**
@@ -75,6 +76,7 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
+            'publicpath',
             'rememberme',
             // 'honeypot',
             // 'csrf',

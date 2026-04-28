@@ -130,4 +130,9 @@ class C_View extends BaseController
     {
         return view('V_Forgot_Password');
     }
+
+    public function Public_Redirect($path = '')
+    {
+        return redirect()->to('/' . $path, 301);
+    }
 }
