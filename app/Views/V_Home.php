@@ -899,7 +899,7 @@
                 </div>
                 <div class="footer-bottom">
                     <p>&copy; 2026 GiaPhuc. All rights reserved.</p>
-                    <p>Live: <a href="https://giaphuc.thuytrieu.vn/public" target="_blank">giaphuc.thuytrieu.vn</a></p>
+                    <p>Live: <a href="https://giaphuc.thuytrieu.vn/" target="_blank">giaphuc.thuytrieu.vn</a></p>
                 </div>
             </div>
         </footer>
