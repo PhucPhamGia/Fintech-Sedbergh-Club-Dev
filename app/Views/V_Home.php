@@ -221,15 +221,6 @@
     html[data-theme="light"] .nav-links a:hover {
         color: #0f172a;
     }
-    html[data-theme="light"] .footer-logo {
-        color: #0f172a;
-    }
-    html[data-theme="light"] .footer-col a {
-        color: rgba(15,23,42,.55);
-    }
-    html[data-theme="light"] .footer-col a:hover {
-        color: #0f172a;
-    }
 
     /* ── Hero UI ───────────────────────────────────────────── */
     .hero {
@@ -542,71 +533,12 @@
         padding: 0 24px 20px;
     }
 
-    /* ── Footer ─────────────────────────────────────────── */
-    .footer {
-        border-top: 1px solid var(--border);
-        padding: 64px 0 32px;
-    }
-    .footer-top {
-        display: flex;
-        gap: 64px;
-        margin-bottom: 48px;
-    }
-    .footer-brand { max-width: 260px; }
-    .footer-logo {
-        display: block;
-        font-size: 1.2rem;
-        font-weight: 800;
-        letter-spacing: -.02em;
-        margin-bottom: 12px;
-        color: #fff;
-    }
-    .footer-brand p {
-        font-size: 0.82rem;
-        color: var(--muted);
-        line-height: 1.6;
-    }
-    .footer-links {
-        display: flex;
-        gap: 48px;
-        margin-left: auto;
-    }
-    .footer-col { display: flex; flex-direction: column; gap: 10px; }
-    .footer-col h4 {
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: .1em;
-        text-transform: uppercase;
-        color: var(--muted);
-        margin-bottom: 4px;
-    }
-    .footer-col a {
-        font-size: 0.875rem;
-        color: rgba(255,255,255,.6);
-        text-decoration: none;
-        transition: color .15s;
-    }
-    .footer-col a:hover { color: #fff; }
-    .footer-bottom {
-        border-top: 1px solid var(--border);
-        padding-top: 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.78rem;
-        color: var(--muted);
-    }
-    .footer-bottom a { color: var(--accent); text-decoration: none; }
-    .footer-bottom a:hover { text-decoration: underline; }
 
     /* ── Responsive ─────────────────────────────────────── */
     @media (max-width: 768px) {
         .stats-grid       { grid-template-columns: repeat(2, 1fr); }
         .features-grid    { grid-template-columns: 1fr; }
         .nav-links        { display: none; }
-        .footer-top       { flex-direction: column; gap: 32px; }
-        .footer-links     { margin-left: 0; }
-        .footer-bottom    { flex-direction: column; gap: 8px; text-align: center; }
     }
     ::view-transition-old(root),
     ::view-transition-new(root) {

@@ -45,7 +45,7 @@ body {
 }
 
 /* ── Auth card ────────────────────────────────────── */
-#signin, #register {
+main#signin, main#register {
     background: var(--surface);
     border: 1px solid var(--border);
     width: 100%;
@@ -192,7 +192,7 @@ html[data-theme="light"] form input:not(:placeholder-shown) + .input-label { bac
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width: 480px) {
     body { padding-top: 28px; }
-    #signin, #register { padding: 28px 18px 22px; }
+    main#signin, main#register { padding: 28px 18px 22px; }
     .name-row { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
