@@ -1,10 +1,11 @@
 name: Deploy to Production
 
-# Chay khi push len branch main
+# Chay khi push len branch main hoac trigger thu cong
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   deploy:
