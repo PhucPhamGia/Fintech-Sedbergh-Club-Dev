@@ -30,6 +30,12 @@ jobs:
             **/.git*/**
             **/tests/**
             **/vendor/**
+            **/system/**
             **/scratch.txt
             **/copilot-instructions.md
             **/.github/**
+            **/.claude/**
+            **/composer.phar
+            **/composer.lock
+            **/writable/**
+            **/docs/**
