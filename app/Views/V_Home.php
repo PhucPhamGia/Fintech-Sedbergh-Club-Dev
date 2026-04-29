@@ -2,44 +2,26 @@
 <html lang="en">
 <head>
   <?= view('V_Head') ?>
+  <script>document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark');</script>
   <title>Featherlight</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:wght@400;700&display=swap');
     
     * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
     }
+    html { overflow-x: hidden; }
 
     body {
         font-family: "Plus Jakarta Sans", sans-serif;
         color: white;
         background-color: #0B1426;
+        overflow-x: hidden;
     }
     
-    #loading-screen {
-        width: 100vw;
-        height: 100vh;
-        background: #0B1426;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    #icon-wrapper {
-        position: relative;
-        width: 10vmin;
-        height: 10vmin;
-        overflow: visible;
-    }
-    #loading-icon, #trail-layer {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-    }
-
-    /* ── Design tokens ─────────────────────────────────── */
+/* ── Design tokens ─────────────────────────────────── */
     :root {
         --bg:       #0B1426;
         --surface:  rgba(255,255,255,0.04);
@@ -115,18 +97,48 @@
         z-index: 100;
         width: calc(100% - 48px);
         max-width: 1140px;
-        background: rgba(11,20,38,.88);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid var(--border);
+        background: rgba(11,20,38,0.35);
+        backdrop-filter: blur(48px) saturate(1.8) brightness(0.9);
+        -webkit-backdrop-filter: blur(48px) saturate(1.8) brightness(0.9);
+        border: 1px solid rgba(255,255,255,0.1);
         border-radius: 14px;
-        box-shadow: 0 4px 32px rgba(0,0,0,0.4);
-        transition: transform .35s cubic-bezier(.4,0,.2,1), opacity .35s ease;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+        transition: transform .7s cubic-bezier(.4,0,.2,1), opacity .7s ease;
     }
     .nav--hidden {
         transform: translateX(-50%) translateY(calc(-100% - 28px));
         opacity: 0;
         pointer-events: none;
+    }
+    .nav--intro {
+        transform: translateX(-50%) translateY(calc(-100% - 28px));
+        pointer-events: none;
+    }
+    /* ticker-strip base merged below */
+    .ticker-strip.ticker--intro {
+        clip-path: inset(0 100% 0 0);
+        pointer-events: none;
+    }
+    .ticker-strip::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 2px;
+        height: 100%;
+        background: linear-gradient(to bottom, transparent, var(--accent), transparent);
+        box-shadow: 0 0 8px var(--accent), 0 0 20px rgba(56,189,248,0.4);
+        z-index: 10;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .ticker-strip.ray-sweep::before {
+        opacity: 1;
+        animation: ticker-ray 1.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+    @keyframes ticker-ray {
+        from { left: 0;    opacity: 1; }
+        90%  { left: 100%; opacity: 1; }
+        to   { left: 100%; opacity: 0; }
     }
     .nav-inner {
         padding: 0 24px;
@@ -195,8 +207,11 @@
         color: #0f172a;
     }
     html[data-theme="light"] .nav {
-        background: rgba(241,245,249,0.92);
-        box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        background: rgba(255,255,255,0.4);
+        backdrop-filter: blur(48px) saturate(1.8) brightness(1.05);
+        -webkit-backdrop-filter: blur(48px) saturate(1.8) brightness(1.05);
+        border-color: rgba(15,23,42,0.1);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8);
     }
     html[data-theme="light"] .btn-ghost {
         color: rgba(15,23,42,.65);
@@ -228,14 +243,65 @@
         min-height: 100vh;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-end;
         padding: 80px 0 0;
+    }
+    .hero::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 320px;
+        background: linear-gradient(to top, var(--bg) 0%, rgba(11,20,38,0.5) 60%, transparent 100%);
+        pointer-events: none;
+        z-index: 2;
     }
     .hero-bg-wrap {
         position: absolute;
         inset: 0;
         overflow: hidden;
         pointer-events: none;
+    }
+    .hero-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(120px);
+        pointer-events: none;
+    }
+    .hero-orb-1 {
+        width: 700px; height: 700px;
+        background: rgba(52,211,153,0.18);
+        top: -150px; right: -100px;
+        animation: orb-drift-1 12s ease-in-out infinite;
+    }
+    .hero-orb-2 {
+        width: 600px; height: 600px;
+        background: rgba(244,114,182,0.15);
+        bottom: -80px; left: -120px;
+        animation: orb-drift-2 15s ease-in-out infinite;
+    }
+    .hero-orb-3 {
+        width: 480px; height: 480px;
+        background: rgba(52,211,153,0.1);
+        top: 35%; left: 35%;
+        animation: orb-drift-3 10s ease-in-out infinite;
+    }
+    html[data-theme="light"] .hero-orb-1 { background: rgba(6,95,70,0.18); }
+    html[data-theme="light"] .hero-orb-2 { background: rgba(244,114,182,0.15); }
+    html[data-theme="light"] .hero-orb-3 { background: rgba(6,95,70,0.12); }
+    html[data-theme="light"] .hero::after {
+        background: linear-gradient(to top, var(--bg) 0%, rgba(241,245,249,0.5) 60%, transparent 100%);
+    }
+    @keyframes orb-drift-1 {
+        0%, 100% { transform: translate(0, 0); }
+        50%       { transform: translate(-60px, 40px); }
+    }
+    @keyframes orb-drift-2 {
+        0%, 100% { transform: translate(0, 0); }
+        50%       { transform: translate(50px, -50px); }
+    }
+    @keyframes orb-drift-3 {
+        0%, 100% { transform: translate(0, 0); }
+        50%       { transform: translate(-40px, -60px); }
     }
     #hero-canvas {
         position: absolute;
@@ -252,7 +318,7 @@
         background: radial-gradient(ellipse, rgba(56,189,248,.12) 0%, transparent 70%);
         pointer-events: none;
     }
-    .hero .container { position: relative; z-index: 1; text-align: center; }
+    .hero .container { position: relative; z-index: 3; text-align: left; padding: 0 0 60px 0px; margin: 0 0 0 6%; max-width: 600px; }
     .hero-badge {
         display: inline-flex;
         align-items: center;
@@ -278,38 +344,55 @@
         50%       { opacity: .4; }
     }
     .hero-title {
-        font-size: clamp(2.4rem, 6vw, 4.5rem);
-        font-weight: 800;
-        line-height: 1.08;
+        font-family: "Space Grotesk", sans-serif;
+        font-size: clamp(2rem, 5vw, 4rem);
+        font-weight: 700;
+        line-height: 1.04;
         letter-spacing: -.03em;
         margin-bottom: 20px;
     }
-    .hero-title .accent { color: var(--accent); }
+    .hero-title .accent { color: var(--accent); font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; letter-spacing: -.04em; display: table; margin-left: 2rem; }
     .hero-sub {
-        font-size: clamp(1rem, 2vw, 1.15rem);
+        position: absolute;
+        top: 20%;
+        right: 6%;
+        font-size: 0.875rem;
         color: var(--muted);
-        max-width: 520px;
-        margin: 0 auto 36px;
+        max-width: 260px;
+        margin: 0;
+        text-align: right;
         line-height: 1.6;
     }
-    .hero-actions { display: flex; gap: 12px; justify-content: center; }
-    .hero-actions .btn-primary,
-    .hero-actions .btn-ghost { font-size: 0.95rem; padding: 13px 28px; }
+
+    .hero-actions { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; margin-left: 2.5rem; }
+    .hero-actions .btn-primary { font-size: 0.95rem; padding: 13px 48px; }
+    .hero-secondary-link {
+        font-size: 0.875rem;
+        color: var(--muted);
+        text-decoration: none;
+        transition: color .15s;
+    }
+    .hero-secondary-link:hover { color: #fff; }
+    html[data-theme="light"] .hero-secondary-link:hover { color: #0f172a; }
 
     /* Ticker strip */
     .ticker-strip {
-        margin-top: 80px;
-        border-top: 1px solid var(--border);
-        border-bottom: 1px solid var(--border);
-        background: rgba(255,255,255,.02);
         overflow: hidden;
-        padding: 14px 0;
+        margin-top: 16px;
+        border-top: 1px solid rgba(56,189,248,.15);
+        border-bottom: 1px solid rgba(56,189,248,.15);
+        background: rgba(56,189,248,.03);
+        position: relative;
+        z-index: 3;
+        padding: 12px 0;
+        font-family: "JetBrains Mono", monospace;
+        clip-path: inset(0 0% 0 0);
+        transition: clip-path 1.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .ticker-inner {
         display: flex;
-        gap: 0;
         width: max-content;
-        animation: ticker 28s linear infinite;
+        animation: ticker 45s linear infinite;
     }
     @keyframes ticker {
         from { transform: translateX(0); }
@@ -318,20 +401,26 @@
     .ticker-item {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 0 36px;
-        border-right: 1px solid var(--border);
+        gap: 12px;
+        padding: 0 32px;
+        border-right: 1px solid rgba(56,189,248,.12);
         white-space: nowrap;
-        font-size: 0.82rem;
+        font-size: 0.8rem;
+        letter-spacing: .02em;
     }
-    .ticker-name { color: var(--muted); font-weight: 600; }
-    .ticker-price { font-weight: 700; }
-    .ticker-change { font-weight: 600; font-size: 0.78rem; }
+    .ticker-name { color: rgba(56,189,248,.6); font-weight: 400; }
+    .ticker-price { color: #fff; font-weight: 700; }
+    .ticker-change { font-weight: 700; font-size: 0.78rem; }
+    .up   { color: #34D399; }
+    .down { color: #F472B6; }
+    html[data-theme="light"] .ticker-name  { color: rgba(15,23,42,.5); }
+    html[data-theme="light"] .ticker-price { color: #0f172a; }
+    html[data-theme="light"] .ticker-strip .down { color: #e11d48; }
+    html[data-theme="light"] .ticker-strip .up   { color: #059669; }
 
     /* ── Achievements ───────────────────────────────────── */
     .achievements {
-        padding: 64px 0;
-        border-bottom: 1px solid var(--border);
+        padding: 64px 0 64px;
     }
     .stats-grid {
         display: grid;
@@ -364,19 +453,32 @@
     }
 
     /* ── Features ───────────────────────────────────────── */
-    .features {
-        padding: 96px 0;
-    }
+    .features { padding: 96px 0; }
     .features-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
+        grid-template-columns: 1.2fr 1fr 1fr 1fr;
+        grid-template-rows: 200px 180px 180px;
+        gap: 12px;
+        grid-template-areas:
+            "a b b c"
+            "a d e c"
+            "a d f f";
     }
+    .feature-card:nth-child(1) { grid-area: a; }
+    .feature-card:nth-child(2) { grid-area: b; }
+    .feature-card:nth-child(3) { grid-area: c; }
+    .feature-card:nth-child(4) { grid-area: d; }
+    .feature-card:nth-child(5) { grid-area: e; justify-content: center; }
+    .feature-card:nth-child(6) { grid-area: f; }
     .feature-card {
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: var(--radius);
-        padding: 32px;
+        padding: 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        overflow: hidden;
         transition: border-color .2s, background .2s;
     }
     .feature-card:hover {
@@ -388,27 +490,17 @@
         background: rgba(56,189,248,.06);
     }
     .feature-icon {
-        margin-bottom: 16px;
+        margin-bottom: 20px;
     }
     .feature-icon svg {
         width: 28px;
         height: 28px;
         color: var(--accent);
-        animation: float-icon 3s ease-in-out infinite;
-    }
-    .feature-card:nth-child(2) .feature-icon svg { animation-delay: -0.5s; }
-    .feature-card:nth-child(3) .feature-icon svg { animation-delay: -1s;   }
-    .feature-card:nth-child(4) .feature-icon svg { animation-delay: -1.5s; }
-    .feature-card:nth-child(5) .feature-icon svg { animation-delay: -0.3s; }
-    .feature-card:nth-child(6) .feature-icon svg { animation-delay: -0.8s; }
-    @keyframes float-icon {
-        0%, 100% { transform: translateY(0px);  }
-        50%       { transform: translateY(-5px); }
     }
     .feature-card h3 {
         font-size: 1rem;
         font-weight: 700;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         line-height: 1.3;
     }
     .feature-card p {
@@ -469,69 +561,63 @@
         border-top: 1px solid var(--border);
     }
     .faq-list {
-        max-width: 720px;
+        max-width: 860px;
         margin: 0 auto;
         display: flex;
         flex-direction: column;
-        gap: 2px;
     }
-    .faq-item {
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        overflow: hidden;
-        transition: border-color .15s;
-    }
-    .faq-item.open { border-color: rgba(56,189,248,.3); }
+    .faq-item { border-top: 1px solid var(--border); }
+    .faq-item:last-child { border-bottom: 1px solid var(--border); }
     .faq-q {
         width: 100%;
         background: none;
         border: none;
         color: inherit;
-        font-family: inherit;
-        padding: 20px 24px;
-        font-weight: 600;
-        font-size: 0.95rem;
         cursor: pointer;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        user-select: none;
-        transition: background .15s;
+        gap: 24px;
+        padding: 28px 0;
+        font-size: 1.05rem;
+        font-weight: 500;
+        font-family: "Plus Jakarta Sans", sans-serif;
         text-align: left;
+        transition: opacity .2s;
     }
-    .faq-q:hover { background: var(--surface); }
-    .faq-icon {
-        font-size: 1.3rem;
-        font-weight: 300;
-        color: var(--muted);
-        transition: transform .25s ease, color .25s ease;
-        flex-shrink: 0;
-        margin-left: 16px;
-    }
-    .faq-item.open .faq-icon {
-        transform: rotate(45deg);
+    .faq-q:hover { opacity: .65; }
+    .faq-num {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: .1em;
         color: var(--accent);
+        min-width: 28px;
+        flex-shrink: 0;
     }
+    .faq-icon {
+        margin-left: auto;
+        flex-shrink: 0;
+        color: var(--muted);
+        transition: transform .35s cubic-bezier(.4,0,.2,1), color .2s;
+    }
+    .faq-icon svg { display: block; width: 16px; height: 16px; }
+    .faq-item.open .faq-icon { transform: rotate(90deg); color: var(--accent); }
     .faq-body {
         display: grid;
         grid-template-rows: 0fr;
-        transition: grid-template-rows 0.3s ease;
+        transition: grid-template-rows 0.35s cubic-bezier(.4,0,.2,1);
     }
-    .faq-item.open .faq-body {
-        grid-template-rows: 1fr;
-    }
+    .faq-item.open .faq-body { grid-template-rows: 1fr; }
     .faq-body > p {
         overflow: hidden;
         min-height: 0;
-        padding: 0 24px;
         font-size: 0.875rem;
         color: var(--muted);
-        line-height: 1.7;
-        transition: padding 0.3s ease;
+        line-height: 1.75;
+        padding: 0 0 0 52px;
+        transition: padding 0.35s cubic-bezier(.4,0,.2,1);
     }
-    .faq-item.open .faq-body > p {
-        padding: 0 24px 20px;
-    }
+    .faq-item.open .faq-body > p { padding: 0 0 28px 52px; }
 
 
     /* ── Responsive ─────────────────────────────────────── */
@@ -545,21 +631,37 @@
         animation: none;
         mix-blend-mode: normal;
     }
+
+    /* ── Intro overlay ──────────────────────────────────── */
+    #intro-overlay {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 9999;
+        pointer-events: none;
+        width: 220px;
+        height: 4px;
+        border-radius: 3px;
+        box-shadow: 0 0 0 9999px #ffffff;
+        transition: width  0.55s cubic-bezier(0.76, 0, 0.24, 1),
+                    height 0.55s cubic-bezier(0.76, 0, 0.24, 1),
+                    border-radius 0.55s;
+    }
+    #intro-overlay.phase2 { width: 400px; height: 240px; border-radius: 14px; }
+    #intro-overlay.phase3 {
+        width: 200vw; height: 200vh; border-radius: 0;
+        transition: width  0.65s cubic-bezier(0.76, 0, 0.24, 1),
+                    height 0.65s cubic-bezier(0.76, 0, 0.24, 1),
+                    border-radius 0.4s;
+    }
   </style>
 </head>
 <body>
-    <div id="loading-screen">
-        <div id="icon-wrapper">
-            <svg id="trail-layer" viewBox="0 0 100 100" overflow="visible"></svg>
-            <svg id="loading-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 640 640">
-                <path d="M416 64C457 64 496.3 80.3 525.2 109.2L530.7 114.7C559.7 143.7 576 183 576 223.9C576 248 570.3 271.5 559.8 292.7C557.9 296.4 554.5 299.2 550.5 300.4L438.5 334C434.6 335.2 432 338.7 432 342.8C432 347.9 436.1 352 441.2 352L473.4 352C487.7 352 494.8 369.2 484.7 379.3L462.3 401.7C460.4 403.6 458.1 404.9 455.6 405.7L374.6 430C370.7 431.2 368.1 434.7 368.1 438.8C368.1 443.9 372.2 448 377.3 448C390.5 448 396.2 463.7 385.1 470.9C344 497.5 295.8 512 246.1 512L160.1 512L112.1 560C103.3 568.8 88.9 568.8 80.1 560C71.3 551.2 71.3 536.8 80.1 528L320 288C328.8 279.2 328.8 264.8 320 256C311.2 247.2 296.8 247.2 288 256L143.5 400.5C137.8 406.2 128 402.2 128 394.1C128 326.2 155 261.1 203 213.1L306.8 109.2C335.7 80.3 375 64 416 64z"/>
-            </svg>
-        </div>
-    </div>
-    <div id="content" style="display: none;">
+<div id="intro-overlay" aria-hidden="true"></div>
 
         <!-- Nav -->
-        <nav class="nav">
+        <nav class="nav nav--intro">
             <div class="nav-inner">
                 <a href="/" class="nav-logo">
                     <!-- Logo (Hero Icon's Euro symbol) -->
@@ -590,39 +692,29 @@
 
         <!-- Hero / CTA -->
         <section class="hero" id="hero">
+            <div class="hero-orb hero-orb-1"></div>
+            <div class="hero-orb hero-orb-2"></div>
+            <div class="hero-orb hero-orb-3"></div>
             <div class="hero-bg-wrap">
                 <canvas id="hero-canvas"></canvas>
                 <div class="hero-bg-glow"></div>
             </div>
+            <p class="hero-sub">
+                Lorem ipsum dolor sit amet consectetur adipiscing elit. Dolor sit amet consectetur adipiscing elit quisque faucibus.
+            </p>
             <div class="container">
-                <div class="hero-badge">
-                    <span class="dot"></span>
-                    Live market data &bull; BTC &bull; ETH &bull; SOL &bull; BNB
-                </div>
                 <h1 class="hero-title">
                     Analyze Crypto.<br>
                     <span class="accent">Trade Smarter.</span>
                 </h1>
-                <p class="hero-sub">
-                    Real-time market intelligence for serious traders.
-                </p>
-                <div class="hero-actions">
-                    <a href="/register" class="btn-primary">Start for Free &rarr;</a>
-                    <a href="/dashboard" class="btn-ghost">View Dashboard</a>
-                </div>
             </div>
             <!-- Ticker strip -->
-            <div class="ticker-strip">
+            <div class="ticker-strip ticker--intro">
                 <div class="ticker-inner">
-                    <span class="ticker-item"><span class="ticker-name">BTC/USDT</span><span class="ticker-price">$67,420</span><span class="ticker-change up">+2.41%</span></span>
-                    <span class="ticker-item"><span class="ticker-name">ETH/USDT</span><span class="ticker-price">$3,511</span><span class="ticker-change up">+1.78%</span></span>
-                    <span class="ticker-item"><span class="ticker-name">SOL/USDT</span><span class="ticker-price">$142.50</span><span class="ticker-change down">-0.92%</span></span>
-                    <span class="ticker-item"><span class="ticker-name">BNB/USDT</span><span class="ticker-price">$589.00</span><span class="ticker-change up">+3.12%</span></span>
-                    <!-- Duplicate set for seamless loop -->
-                    <span class="ticker-item"><span class="ticker-name">BTC/USDT</span><span class="ticker-price">$67,420</span><span class="ticker-change up">+2.41%</span></span>
-                    <span class="ticker-item"><span class="ticker-name">ETH/USDT</span><span class="ticker-price">$3,511</span><span class="ticker-change up">+1.78%</span></span>
-                    <span class="ticker-item"><span class="ticker-name">SOL/USDT</span><span class="ticker-price">$142.50</span><span class="ticker-change down">-0.92%</span></span>
-                    <span class="ticker-item"><span class="ticker-name">BNB/USDT</span><span class="ticker-price">$589.00</span><span class="ticker-change up">+3.12%</span></span>
+                    <span class="ticker-item"><span class="ticker-name">BTC/USDT</span><span class="ticker-price">$67,420</span><span class="ticker-change up">▲ +2.41%</span></span>
+                    <span class="ticker-item"><span class="ticker-name">ETH/USDT</span><span class="ticker-price">$3,511</span><span class="ticker-change up">▲ +1.78%</span></span>
+                    <span class="ticker-item"><span class="ticker-name">SOL/USDT</span><span class="ticker-price">$142.50</span><span class="ticker-change down">▼ -0.92%</span></span>
+                    <span class="ticker-item"><span class="ticker-name">BNB/USDT</span><span class="ticker-price">$589.00</span><span class="ticker-change up">▲ +3.12%</span></span>
                 </div>
             </div>
         </section>
@@ -788,23 +880,23 @@
                 </div>
                 <div class="faq-list">
                     <div class="faq-item">
-                        <button class="faq-q">Where does the market data come from?<span class="faq-icon">+</span></button>
+                        <button class="faq-q"><span class="faq-num">01</span>Where does the market data come from?<span class="faq-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></button>
                         <div class="faq-body"><p>All OHLCV data is sourced directly from the Binance API (api.binance.com/api/v3/klines) and stored in our MySQL database. Data is refreshed daily via an automated import pipeline.</p></div>
                     </div>
                     <div class="faq-item">
-                        <button class="faq-q">Which coins are supported?<span class="faq-icon">+</span></button>
+                        <button class="faq-q"><span class="faq-num">02</span>Which coins are supported?<span class="faq-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></button>
                         <div class="faq-body"><p>Currently we support BTCUSDT, ETHUSDT, SOLUSDT, and BNBUSDT. Additional trading pairs will be added as the platform grows.</p></div>
                     </div>
                     <div class="faq-item">
-                        <button class="faq-q">How are MA20 and MA50 calculated?<span class="faq-icon">+</span></button>
+                        <button class="faq-q"><span class="faq-num">03</span>How are MA20 and MA50 calculated?<span class="faq-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></button>
                         <div class="faq-body"><p>Moving averages are computed server-side using a sliding window over close prices sorted oldest-first. They are batch-updated after each daily import run.</p></div>
                     </div>
                     <div class="faq-item">
-                        <button class="faq-q">Is there an automated trading feature?<span class="faq-icon">+</span></button>
+                        <button class="faq-q"><span class="faq-num">04</span>Is there an automated trading feature?<span class="faq-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></button>
                         <div class="faq-body"><p>An automated trading engine is in active development. The current platform focuses on data ingestion, indicator calculation, and interactive visualization.</p></div>
                     </div>
                     <div class="faq-item">
-                        <button class="faq-q">How do I get access to the dashboard?<span class="faq-icon">+</span></button>
+                        <button class="faq-q"><span class="faq-num">05</span>How do I get access to the dashboard?<span class="faq-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></button>
                         <div class="faq-body"><p>Register for a free account and log in. The dashboard requires authentication. Data import features require an Admin role assigned by a site administrator.</p></div>
                     </div>
                 </div>
@@ -814,59 +906,13 @@
         <!-- Footer -->
         <?= view('V_Footer') ?>
 
-    </div>
 
 
-    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis/bundled/lenis.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lenis@1/dist/lenis.min.js"></script>
     <script>
-    let angle = 0;
-    let lastSpawnAngle = 0;
-    const el = document.getElementById("loading-icon");
-    const trailLayer = document.getElementById("trail-layer");
-    const trails = []; // active trail rects being faded out
-
-    setInterval(() => {
-        angle += 1;
-        el.style.transform = `rotate(${angle}deg)`;
-
-        // spawn a new trail rect every 15 degrees
-        if (angle - lastSpawnAngle >= 15) {
-            lastSpawnAngle = angle;
-            const rad = (angle - 90) * Math.PI / 180; // offset -90 so 0deg points up
-            const cos = Math.cos(rad), sin = Math.sin(rad);
-            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            const w = 6, h = 14;
-            // position rect at radius 57 from center (50,50), rotated to face outward
-            rect.setAttribute('x', 50 + cos * 57 - w / 2);
-            rect.setAttribute('y', 50 + sin * 57 - h / 2);
-            rect.setAttribute('width', w);
-            rect.setAttribute('height', h);
-            rect.setAttribute('rx', 3);
-            rect.setAttribute('fill', 'white');
-            rect.setAttribute('transform', `rotate(${angle}, ${50 + cos * 57}, ${50 + sin * 57})`);
-            trailLayer.appendChild(rect);
-            trails.push({ el: rect, opacity: 1 });
-        }
-
-        // fade out all active trails, remove when fully transparent
-        for (let i = trails.length - 1; i >= 0; i--) {
-            trails[i].opacity -= 0.02;
-            if (trails[i].opacity <= 0) {
-                trails[i].el.remove();
-                trails.splice(i, 1);
-            } else {
-                trails[i].el.setAttribute('opacity', trails[i].opacity);
-            }
-        }
-    }, 16);
-    
-    window.addEventListener('load', () => {
-        document.getElementById('loading-screen').style.display = 'none';
-        document.getElementById('content').style.display = 'block';
-
-        const lenis = new Lenis();
-        function raf(time) {
-            lenis.raf(time);
+    const lenis = typeof Lenis !== 'undefined' ? new Lenis() : null;
+    function raf(time) {
+            if (lenis) lenis.raf(time);
             requestAnimationFrame(raf);
         }
         requestAnimationFrame(raf);
@@ -875,71 +921,78 @@
         const heroCanvas  = document.getElementById('hero-canvas');
 
         // ── Particle network ──────────────────────────────────────
-        (function initNetwork() {
+        (function initContour() {
             const canvas = heroCanvas;
             const ctx = canvas.getContext('2d');
-            const COUNT = 75;
-            const MAX_DIST = 150;
-            const SPEED = 0.4;
-            let nodes = [];
+            let t = 0;
+            const CELL = 18;
+            let COLS, ROWS;
 
             function resize() {
                 canvas.width  = canvas.offsetWidth;
                 canvas.height = canvas.offsetHeight;
+                COLS = Math.ceil(canvas.width  / CELL) + 1;
+                ROWS = Math.ceil(canvas.height / CELL) + 1;
             }
-
-            function makeNode() {
-                return {
-                    x:  Math.random() * canvas.width,
-                    y:  Math.random() * canvas.height,
-                    vx: (Math.random() - 0.5) * SPEED * 2,
-                    vy: (Math.random() - 0.5) * SPEED * 2,
-                };
-            }
-
             resize();
-            window.addEventListener('resize', () => {
-                resize();
-                nodes.forEach(n => {
-                    if (n.x > canvas.width)  n.x = Math.random() * canvas.width;
-                    if (n.y > canvas.height) n.y = Math.random() * canvas.height;
-                });
-            });
+            window.addEventListener('resize', resize);
 
-            for (let i = 0; i < COUNT; i++) nodes.push(makeNode());
+            function noise(x, y, t) {
+                return Math.sin(x * 2.1 + t * 0.4) * Math.cos(y * 1.7 - t * 0.3)
+                     + Math.sin(x * 0.9 - t * 0.2 + y * 1.3) * 0.6
+                     + Math.cos(x * 3.2 + y * 0.8 + t * 0.5) * 0.35;
+            }
+
+            const LEVELS = 8;
 
             function tick() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                for (let i = 0; i < nodes.length; i++) {
-                    const a = nodes[i];
-                    for (let j = i + 1; j < nodes.length; j++) {
-                        const b = nodes[j];
-                        const dx = a.x - b.x, dy = a.y - b.y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-                        if (dist < MAX_DIST) {
-                            const alpha = (1 - dist / MAX_DIST) * 0.35;
-                            ctx.beginPath();
-                            ctx.moveTo(a.x, a.y);
-                            ctx.lineTo(b.x, b.y);
-                            ctx.strokeStyle = `rgba(56,189,248,${alpha})`;
-                            ctx.lineWidth = 1;
-                            ctx.stroke();
-                        }
+                const grid = [];
+                for (let r = 0; r <= ROWS; r++) {
+                    grid[r] = [];
+                    for (let c = 0; c <= COLS; c++) {
+                        grid[r][c] = noise(c / COLS * 4, r / ROWS * 3, t);
                     }
                 }
 
-                nodes.forEach(n => {
-                    n.x += n.vx;
-                    n.y += n.vy;
-                    if (n.x < 0 || n.x > canvas.width)  n.vx *= -1;
-                    if (n.y < 0 || n.y > canvas.height)  n.vy *= -1;
-                    ctx.beginPath();
-                    ctx.arc(n.x, n.y, 1.8, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(56,189,248,0.7)';
-                    ctx.fill();
-                });
+                for (let l = 0; l < LEVELS; l++) {
+                    const level = -1.3 + (l / (LEVELS - 1)) * 2.6;
+                    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+                    const alpha = l % 3 === 0 ? 0.22 : 0.12;
+                    const lw    = isLight ? (l % 3 === 0 ? 1.8 : 1.2) : (l % 3 === 0 ? 1.2 : 0.8);
 
+                    ctx.beginPath();
+                    ctx.strokeStyle = isLight ? `rgba(29,78,216,${alpha})` : `rgba(56,189,248,${alpha})`;
+                    ctx.lineWidth = lw;
+
+                    for (let r = 0; r < ROWS; r++) {
+                        for (let c = 0; c < COLS; c++) {
+                            const x0 = c * CELL, x1 = x0 + CELL;
+                            const y0 = r * CELL, y1 = y0 + CELL;
+                            const v00 = grid[r][c],   v10 = grid[r][c+1];
+                            const v01 = grid[r+1][c], v11 = grid[r+1][c+1];
+                            const pts = [];
+
+                            if ((v00 < level) !== (v10 < level))
+                                pts.push([x0 + (level - v00) / (v10 - v00) * CELL, y0]);
+                            if ((v10 < level) !== (v11 < level))
+                                pts.push([x1, y0 + (level - v10) / (v11 - v10) * CELL]);
+                            if ((v01 < level) !== (v11 < level))
+                                pts.push([x0 + (level - v01) / (v11 - v01) * CELL, y1]);
+                            if ((v00 < level) !== (v01 < level))
+                                pts.push([x0, y0 + (level - v00) / (v01 - v00) * CELL]);
+
+                            if (pts.length >= 2) {
+                                ctx.moveTo(pts[0][0], pts[0][1]);
+                                ctx.lineTo(pts[1][0], pts[1][1]);
+                            }
+                        }
+                    }
+                    ctx.stroke();
+                }
+
+                t += 0.003;
                 requestAnimationFrame(tick);
             }
             tick();
@@ -952,14 +1005,15 @@
             if (heroGlow)   heroGlow.style.transform   = `translateX(-50%) translateY(${scroll * 0.4}px)`;
             if (heroCanvas) heroCanvas.style.transform = `translateY(${scroll * 0.15}px)`;
 
+            const delta = scroll - lastScroll;
             if (scroll > 80) {
-                nav.classList.toggle('nav--hidden', scroll > lastScroll);
+                if (delta > 40)       nav.classList.add('nav--hidden');
+                else if (delta < -40) nav.classList.remove('nav--hidden');
             } else {
                 nav.classList.remove('nav--hidden');
             }
             lastScroll = scroll;
         });
-    });
 
     document.querySelectorAll('.faq-q').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1011,8 +1065,45 @@
                 animate: true,
                 animationDuration: 600,
             });
-            window.addEventListener('load', () => a.show());
+            window.addEventListener('load', () => setTimeout(() => a.show(), 1600));
         }
+    </script>
+    <script>
+    (function initTicker() {
+        const inner = document.querySelector('.ticker-inner');
+        if (!inner) return;
+        const originalHTML = inner.innerHTML;
+
+        function fill() {
+            inner.innerHTML = originalHTML;
+            const setWidth = inner.scrollWidth;
+            const needed = Math.ceil((window.innerWidth * 3) / setWidth);
+            const even = needed % 2 === 0 ? needed : needed + 1;
+            for (let i = 1; i < even; i++) inner.insertAdjacentHTML('beforeend', originalHTML);
+        }
+
+        document.fonts.ready.then(() => {
+            fill();
+            window.addEventListener('resize', fill);
+        });
+    })();
+
+    (function () {
+        const o = document.getElementById('intro-overlay');
+        // bar → small rect
+        setTimeout(() => o.classList.add('phase2'), 80);
+        // small rect → full screen
+        setTimeout(() => o.classList.add('phase3'), 500);
+        // remove overlay + reveal nav + reveal ticker
+        setTimeout(() => {
+            o.remove();
+            document.querySelector('.nav').classList.remove('nav--intro');
+            const ticker = document.querySelector('.ticker-strip');
+            ticker.classList.remove('ticker--intro');
+            ticker.classList.add('ray-sweep');
+            setTimeout(() => ticker.classList.remove('ray-sweep'), 1700);
+        }, 1100);
+    })();
     </script>
 </body>
 </html>
