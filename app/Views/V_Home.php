@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <?= view('V_Head') ?>
   <title>Featherlight</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
@@ -609,14 +608,19 @@
         .footer-links     { margin-left: 0; }
         .footer-bottom    { flex-direction: column; gap: 8px; text-align: center; }
     }
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+        animation: none;
+        mix-blend-mode: normal;
+    }
   </style>
 </head>
 <body>
     <div id="loading-screen">
         <div id="icon-wrapper">
             <svg id="trail-layer" viewBox="0 0 100 100" overflow="visible"></svg>
-            <svg id="loading-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M14.121 7.629A3 3 0 0 0 9.017 9.43c-.023.212-.002.425.028.636l.506 3.541a4.5 4.5 0 0 1-.43 2.65L9 16.5l1.539-.513a2.25 2.25 0 0 1 1.422 0l.655.218a2.25 2.25 0 0 0 1.718-.122L15 15.75M8.25 12H12m9 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            <svg id="loading-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 640 640">
+                <path d="M416 64C457 64 496.3 80.3 525.2 109.2L530.7 114.7C559.7 143.7 576 183 576 223.9C576 248 570.3 271.5 559.8 292.7C557.9 296.4 554.5 299.2 550.5 300.4L438.5 334C434.6 335.2 432 338.7 432 342.8C432 347.9 436.1 352 441.2 352L473.4 352C487.7 352 494.8 369.2 484.7 379.3L462.3 401.7C460.4 403.6 458.1 404.9 455.6 405.7L374.6 430C370.7 431.2 368.1 434.7 368.1 438.8C368.1 443.9 372.2 448 377.3 448C390.5 448 396.2 463.7 385.1 470.9C344 497.5 295.8 512 246.1 512L160.1 512L112.1 560C103.3 568.8 88.9 568.8 80.1 560C71.3 551.2 71.3 536.8 80.1 528L320 288C328.8 279.2 328.8 264.8 320 256C311.2 247.2 296.8 247.2 288 256L143.5 400.5C137.8 406.2 128 402.2 128 394.1C128 326.2 155 261.1 203 213.1L306.8 109.2C335.7 80.3 375 64 416 64z"/>
             </svg>
         </div>
     </div>
@@ -625,10 +629,10 @@
         <!-- Nav -->
         <nav class="nav">
             <div class="nav-inner">
-                <a href="<?= site_url('/') ?>" class="nav-logo">
+                <a href="/" class="nav-logo">
                     <!-- Logo (Hero Icon's Euro symbol) -->
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.121 7.629A3 3 0 0 0 9.017 9.43c-.023.212-.002.425.028.636l.506 3.541a4.5 4.5 0 0 1-.43 2.65L9 16.5l1.539-.513a2.25 2.25 0 0 1 1.422 0l.655.218a2.25 2.25 0 0 0 1.718-.122L15 15.75" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 640 640">
+                        <path d="M416 64C457 64 496.3 80.3 525.2 109.2L530.7 114.7C559.7 143.7 576 183 576 223.9C576 248 570.3 271.5 559.8 292.7C557.9 296.4 554.5 299.2 550.5 300.4L438.5 334C434.6 335.2 432 338.7 432 342.8C432 347.9 436.1 352 441.2 352L473.4 352C487.7 352 494.8 369.2 484.7 379.3L462.3 401.7C460.4 403.6 458.1 404.9 455.6 405.7L374.6 430C370.7 431.2 368.1 434.7 368.1 438.8C368.1 443.9 372.2 448 377.3 448C390.5 448 396.2 463.7 385.1 470.9C344 497.5 295.8 512 246.1 512L160.1 512L112.1 560C103.3 568.8 88.9 568.8 80.1 560C71.3 551.2 71.3 536.8 80.1 528L320 288C328.8 279.2 328.8 264.8 320 256C311.2 247.2 296.8 247.2 288 256L143.5 400.5C137.8 406.2 128 402.2 128 394.1C128 326.2 155 261.1 203 213.1L306.8 109.2C335.7 80.3 375 64 416 64z"/>
                     </svg>
                     Featherlight
                 </a>
@@ -638,8 +642,8 @@
                     <a href="#faq">FAQ</a>
                 </div>
                 <div class="nav-cta">
-                    <a href="<?= site_url('login') ?>" class="btn-ghost">Log in</a>
-                    <a href="<?= site_url('register') ?>" class="btn-primary">Get Started</a>
+                    <a href="/login" class="btn-ghost">Log in</a>
+                    <a href="/register" class="btn-primary">Get Started</a>
                     <button id="theme-toggle" class="btn-theme" aria-label="Toggle theme">
                         <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
@@ -671,8 +675,8 @@
                     Real-time market intelligence for serious traders.
                 </p>
                 <div class="hero-actions">
-                    <a href="<?= site_url('register') ?>" class="btn-primary">Start for Free &rarr;</a>
-                    <a href="<?= site_url('dashboard') ?>" class="btn-ghost">View Dashboard</a>
+                    <a href="/register" class="btn-primary">Start for Free &rarr;</a>
+                    <a href="/dashboard" class="btn-ghost">View Dashboard</a>
                 </div>
             </div>
             <!-- Ticker strip -->
@@ -838,7 +842,7 @@
                     </table>
                 </div>
                 <div class="market-cta">
-                    <a href="<?= site_url('dashboard') ?>" class="btn-primary">View Full Dashboard &rarr;</a>
+                    <a href="/dashboard" class="btn-primary">View Full Dashboard &rarr;</a>
                 </div>
             </div>
         </section>
@@ -876,33 +880,7 @@
         </section>
 
         <!-- Footer -->
-        <footer class="footer">
-            <div class="container">
-                <div class="footer-top">
-                    <div class="footer-brand">
-                        <span class="footer-logo">GiaPhuc</span>
-                        <p>A cryptocurrency data analysis platform powered by Binance API. Built for traders who think in data.</p>
-                    </div>
-                    <div class="footer-links">
-                        <div class="footer-col">
-                            <h4>Platform</h4>
-                            <a href="<?= site_url('dashboard') ?>">Dashboard</a>
-                            <a href="<?= site_url('database') ?>">Database</a>
-                            <a href="<?= site_url('importbinance') ?>">Import Data</a>
-                        </div>
-                        <div class="footer-col">
-                            <h4>Account</h4>
-                            <a href="<?= site_url('login') ?>">Log In</a>
-                            <a href="<?= site_url('register') ?>">Register</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="footer-bottom">
-                    <p>&copy; 2026 GiaPhuc. All rights reserved.</p>
-                    <p>Live: <a href="https://giaphuc.thuytrieu.vn/" target="_blank">giaphuc.thuytrieu.vn</a></p>
-                </div>
-            </div>
-        </footer>
+        <?= view('V_Footer') ?>
 
     </div>
 
@@ -1061,10 +1039,30 @@
         const html = document.documentElement;
         const btn  = document.getElementById('theme-toggle');
         html.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
-        btn.addEventListener('click', () => {
+
+        btn.addEventListener('click', (e) => {
             const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
+
+            if (!document.startViewTransition) {
+                html.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                return;
+            }
+
+            const x = e.clientX, y = e.clientY;
+            const endRadius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+
+            const transition = document.startViewTransition(() => {
+                html.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+            });
+
+            transition.ready.then(() => {
+                document.documentElement.animate(
+                    { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${endRadius}px at ${x}px ${y}px)`] },
+                    { duration: 500, easing: 'ease-in-out', pseudoElement: '::view-transition-new(root)' }
+                );
+            });
         });
     })();
     </script>

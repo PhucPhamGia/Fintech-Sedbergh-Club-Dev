@@ -142,8 +142,11 @@ form input:not(:placeholder-shown) + .input-label {
 /* ── Links ────────────────────────────────────────── */
 .form-links {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     margin: 14px 0 8px;
+}
+#signin .form-links {
+    justify-content: space-between;
 }
 .form-links a {
     font-size: 0.85rem;

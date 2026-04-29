@@ -1,5 +1,27 @@
-<link rel="stylesheet" href="<?= base_url('assets/css/footer.css'); ?>">
-<footer>
-    <p>Powered by <a href="https://codeigniter.com" target="_blank">CodeIgniter 4</a> and <a href="https://www.binance.com" target="_blank">Binance API</a>.</p>
-    <p>&copy; <?php echo date("Y", time())?>. All rights reserved.</p>
+<footer class="footer">
+    <div class="container">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <span class="footer-logo">GiaPhuc</span>
+                <p>A cryptocurrency data analysis platform powered by Binance API. Built for traders who think in data.</p>
+            </div>
+            <div class="footer-links">
+                <div class="footer-col">
+                    <h4>Platform</h4>
+                    <a href="/dashboard">Dashboard</a>
+                    <a href="/database">Database</a>
+                    <a href="/importbinance">Import Data</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Account</h4>
+                    <a href="/login">Log In</a>
+                    <a href="/register">Register</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; <?= date('Y') ?> GiaPhuc. All rights reserved.</p>
+            <p>Live: <a href="https://giaphuc.thuytrieu.vn" target="_blank">giaphuc.thuytrieu.vn</a></p>
+        </div>
+    </div>
 </footer>

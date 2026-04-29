@@ -1,8 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <?= view('V_Head') ?>
   <title>Database</title>
   <link rel="stylesheet" href="<?= base_url('assets/css/database.css') ?>?v=3">
 
