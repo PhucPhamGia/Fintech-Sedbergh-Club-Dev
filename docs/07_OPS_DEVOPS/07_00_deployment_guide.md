@@ -36,6 +36,14 @@
 ssh -p 2229 -i ~/.ssh/giaphuc_dev_ed25519 giaphuc_dev@103.77.160.104
 ```
 
+### Authorized Public Keys
+
+| Machine | Fingerprint | Added |
+|---------|-------------|-------|
+| MacBook (PhamGiaPhuc) | `SHA256:FIGCuj/xVghg3InRUXiXHz/ECgyB6v3RiR6P9nr4oUw` | 2026-04-29 |
+
+> Full public keys được lưu ngoài repo (password manager / secure note).
+
 > **Lưu ý:** User `giaphuc_dev` chỉ có quyền trong thư mục `/home/thuytrieu.vn/giaphuc`, không có quyền root.
 
 ---
