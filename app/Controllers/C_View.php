@@ -21,13 +21,23 @@ class C_View extends BaseController
 
     public function Home()
     {
-        return view('V_Home');
+        $M_Coin_Data = new M_Coin_Data();
+        $coins = $M_Coin_Data->get_list_coin();
+
+        $maData = [];
+        foreach ($coins as $coin) {
+            $rows = $M_Coin_Data->get_ma20(1, $coin['id_coin'], '1h');
+            $maData[$coin['coinname']] = $rows[0] ?? null;
+        }
+
+        return view('V_Home', ['coins' => $coins, 'maData' => $maData]);
     }
 
     // Show dashboard page
     public function Dashboard()
     {
-        return view('V_Dashboard');
+        $M_Coin_Data = new M_Coin_Data();
+        return view('V_Dashboard', ['coins' => $M_Coin_Data->get_list_coin()]);
     }
 
     public function Database()

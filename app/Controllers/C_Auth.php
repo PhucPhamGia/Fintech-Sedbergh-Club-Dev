@@ -129,21 +129,30 @@ class C_Auth extends BaseController
         $userStatus = null;
         $storedPassword = null;
 
+        $userDisplayName = null;
+        $userRole        = null;
+
         # Get user profile info
         if (is_array($user)) {
-            $userId        = $user['id'] ?? null;
-            $userStatus    = $user['status'] ?? null;
+            $userId          = $user['id']           ?? null;
+            $userStatus      = $user['status']       ?? null;
+            $userDisplayName = $user['display_name'] ?? null;
+            $userRole        = $user['role']         ?? null;
         } elseif (is_object($user)) {
-            $userId        = $user->id ?? null;
-            $userStatus    = $user->status ?? null;
+            $userId          = $user->id           ?? null;
+            $userStatus      = $user->status       ?? null;
+            $userDisplayName = $user->display_name ?? null;
+            $userRole        = $user->role         ?? null;
         }
 
-        # Get auth info (username, password)
+        # Get auth info (username, email, password)
         if (is_array($auth)) {
             $userNameValue  = $auth['username'] ?? null;
+            $userEmail      = $auth['email']    ?? null;
             $storedPassword = $auth['password'] ?? null;
         } elseif (is_object($auth)) {
             $userNameValue  = $auth->username ?? null;
+            $userEmail      = $auth->email    ?? null;
             $storedPassword = $auth->password ?? null;
         }
 
@@ -199,9 +208,12 @@ class C_Auth extends BaseController
         $session->regenerate(true);
 
         $session->set([
-            'user_id'   => $userId,
-            'username'  => $userNameValue,
-            'logged_in' => true,
+            'user_id'      => $userId,
+            'username'     => $userNameValue,
+            'display_name' => $userDisplayName ?? '',
+            'email'        => $userEmail ?? '',
+            'role'         => $userRole ?? 'User',
+            'logged_in'    => true,
         ]);
 
         // Remember-me: store a random token (hashed server-side) and set a cookie.

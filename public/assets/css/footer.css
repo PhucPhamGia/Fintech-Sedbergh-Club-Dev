@@ -1,11 +1,18 @@
+.footer .container {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
 .footer {
-    border-top: 1px solid var(--border);
-    padding: 64px 0 32px;
+    width: 100%;
+    border-top: 1px solid var(--border, rgba(255,255,255,0.09));
+    padding: 40px 0 20px;
 }
 .footer-top {
     display: flex;
-    gap: 64px;
-    margin-bottom: 48px;
+    gap: 48px;
+    margin-bottom: 32px;
 }
 .footer-brand { max-width: 260px; }
 .footer-logo {
@@ -18,7 +25,7 @@
 }
 .footer-brand p {
     font-size: 0.82rem;
-    color: var(--muted);
+    color: var(--muted, rgba(255,255,255,0.45));
     line-height: 1.6;
 }
 .footer-links {
@@ -32,7 +39,7 @@
     font-weight: 700;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: var(--muted, rgba(255,255,255,0.45));
     margin-bottom: 4px;
 }
 .footer-col a {
@@ -43,15 +50,15 @@
 }
 .footer-col a:hover { color: #fff; }
 .footer-bottom {
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--border, rgba(255,255,255,0.09));
     padding-top: 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 0.78rem;
-    color: var(--muted);
+    color: var(--muted, rgba(255,255,255,0.45));
 }
-.footer-bottom a { color: var(--accent); text-decoration: none; }
+.footer-bottom a { color: var(--accent, #38BDF8); text-decoration: none; }
 .footer-bottom a:hover { text-decoration: underline; }
 
 html[data-theme="light"] .footer-logo { color: #0f172a; }

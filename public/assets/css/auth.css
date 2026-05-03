@@ -23,6 +23,16 @@ body {
     flex-direction: column;
 }
 
+#auth-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+main#signin { position: relative; z-index: 1; }
+
 /* ── Flash messages ───────────────────────────────── */
 .message {
     max-width: 420px;
@@ -46,8 +56,10 @@ body {
 
 /* ── Auth card ────────────────────────────────────── */
 main#signin, main#register {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: rgba(11,20,38,0.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.09);
     width: 100%;
     max-width: 420px;
     margin: auto;
@@ -61,7 +73,12 @@ main#signin, main#register {
     font-size: 1.75rem;
     font-weight: 800;
     letter-spacing: -.02em;
-    margin-bottom: 24px;
+    margin-bottom: 8px;
+}
+.auth-sub {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 40px;
 }
 
 /* ── Form ─────────────────────────────────────────── */
@@ -118,8 +135,41 @@ form input:not(:placeholder-shown) + .input-label {
     font-size: 0.72rem;
     font-weight: 600;
     color: var(--accent);
-    background: #0B1426;
+    background: #131c2e;
+    padding: 0 6px;
+    border-radius: 4px;
 }
+
+/* ── Shake on error ──────────────────────────────── */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    15%       { transform: translateX(-7px); }
+    30%       { transform: translateX(7px); }
+    45%       { transform: translateX(-4px); }
+    60%       { transform: translateX(4px); }
+    75%       { transform: translateX(-2px); }
+    90%       { transform: translateX(2px); }
+}
+.shake { animation: shake 0.45s cubic-bezier(.36,.07,.19,.97) both; }
+
+/* ── Password toggle ─────────────────────────────── */
+.pwd-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    transition: color .15s;
+}
+.pwd-toggle:hover { color: #fff; }
+.pwd-toggle svg { width: 18px; height: 18px; }
+html[data-theme="light"] .pwd-toggle:hover { color: #0f172a; }
 
 /* ── Remember me (login only) ─────────────────────── */
 .remember-row {
@@ -187,7 +237,15 @@ html[data-theme="light"] body { background: #f1f5f9; color: #0f172a; }
 html[data-theme="light"] form input[type="text"],
 html[data-theme="light"] form input[type="password"] { background: rgba(0,0,0,.03); color: #0f172a; }
 html[data-theme="light"] form input:focus + .input-label,
-html[data-theme="light"] form input:not(:placeholder-shown) + .input-label { background: #f1f5f9; }
+html[data-theme="light"] form input:not(:placeholder-shown) + .input-label { background: #f1f5f9; padding: 0 6px; }
+
+/* ── Minimal footer ──────────────────────────────── */
+.auth-footer {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--muted);
+    padding: 20px 0 8px;
+}
 
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width: 480px) {

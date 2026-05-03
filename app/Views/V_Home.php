@@ -4,8 +4,10 @@
   <?= view('V_Head') ?>
   <script>document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark');</script>
   <title>Featherlight</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:wght@400;700&display=swap">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:wght@400;700&display=swap');
     
     * {
         margin: 0;
@@ -195,6 +197,69 @@
     html[data-theme="light"] .btn-theme .icon-moon { display: none; }
     html[data-theme="light"] .btn-theme .icon-sun  { display: block; }
 
+    .nav-profile-wrap { position: relative; }
+    .nav-avatar {
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        border: 1px solid rgba(56,189,248,0.25);
+        background: rgba(56,189,248,0.1);
+        padding: 0; overflow: hidden;
+        flex-shrink: 0; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: border-color .15s;
+    }
+    .nav-avatar:hover { border-color: #38BDF8; }
+    .nav-avatar img { width: 100%; height: 100%; display: block; object-fit: cover; }
+    .nav-avatar-initials {
+        display: flex; align-items: center; justify-content: center;
+        width: 100%; height: 100%;
+        font-size: 0.65rem; font-weight: 700;
+        font-family: "Plus Jakarta Sans", sans-serif;
+        color: #38BDF8; letter-spacing: .04em; pointer-events: none;
+    }
+    .profile-dropdown {
+        display: none; position: absolute;
+        top: calc(100% + 10px); right: 0;
+        min-width: 148px;
+        background: rgba(11,20,38,0.92);
+        backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255,255,255,0.09);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+        padding: 6px 0; z-index: 200; overflow: hidden;
+    }
+    .profile-dropdown.show { display: block; animation: pdFadeIn .15s; }
+    @keyframes pdFadeIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+    .profile-dropdown-item {
+        display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px 16px;
+        font-family: "Plus Jakarta Sans", sans-serif;
+        font-size: 0.875rem; font-weight: 500;
+        color: rgba(255,255,255,0.45);
+        text-decoration: none; background: none; border: none;
+        text-align: left; cursor: pointer;
+        transition: color .15s, background .15s;
+    }
+    .profile-dropdown-item:hover { color: #fff; background: rgba(255,255,255,0.04); }
+    .profile-dropdown-item svg { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.7; }
+    .profile-dropdown-divider { border: none; border-top: 1px solid rgba(255,255,255,0.09); margin: 5px 0; }
+    html[data-theme="light"] .profile-dropdown {
+        background: rgba(255,255,255,0.95);
+        border-color: rgba(15,23,42,0.12);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    html[data-theme="light"] .profile-dropdown-item { color: rgba(15,23,42,0.6); }
+    html[data-theme="light"] .profile-dropdown-item:hover { color: #0f172a; background: rgba(15,23,42,0.05); }
+    html[data-theme="light"] .profile-dropdown-divider { border-color: rgba(15,23,42,0.1); }
+    .dropdown-username { padding: 10px 16px 4px; font-size: 0.82rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    html[data-theme="light"] .dropdown-username { color: #0f172a; }
+    .dropdown-role { display: inline-block; margin: 0 16px 8px; padding: 2px 8px; border-radius: 20px; font-size: 0.63rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+    .dropdown-role.role-admin     { background: rgba(245,158,11,0.15);  color: #f59e0b; }
+    .dropdown-role.role-moderator { background: rgba(167,139,250,0.15); color: #a78bfa; }
+    .dropdown-role.role-user      { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.45); }
+    .dropdown-role.role-guest     { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.35); }
+    html[data-theme="light"] .dropdown-role.role-user  { background: rgba(15,23,42,0.07); color: rgba(15,23,42,0.5); }
+    html[data-theme="light"] .dropdown-role.role-guest { background: rgba(15,23,42,0.05); color: rgba(15,23,42,0.4); }
+
     /* ── Light mode ────────────────────────────────────────────── */
     html[data-theme="light"] {
         --bg:      #f1f5f9;
@@ -264,8 +329,9 @@
     .hero-orb {
         position: absolute;
         border-radius: 50%;
-        filter: blur(120px);
+        filter: blur(80px);
         pointer-events: none;
+        will-change: transform;
     }
     .hero-orb-1 {
         width: 700px; height: 700px;
@@ -676,8 +742,57 @@
                     <a href="#faq">FAQ</a>
                 </div>
                 <div class="nav-cta">
-                    <a href="/login" class="btn-ghost">Log in</a>
-                    <a href="/register" class="btn-primary">Get Started</a>
+                    <?php if (session()->get('logged_in')): ?>
+                        <?php
+                            $email       = trim(session()->get('email') ?? '');
+                            $displayName = trim(session()->get('display_name') ?? '');
+                            $username    = session()->get('username') ?? 'U';
+                            $showName    = $displayName !== '' ? $displayName : $username;
+                            $nameParts   = array_values(array_filter(explode(' ', $showName)));
+                            $initials    = count($nameParts) >= 2
+                                ? strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1))
+                                : strtoupper(substr($nameParts[0] ?? 'U', 0, 2));
+                        ?>
+                        <div class="nav-profile-wrap" id="profileWrap">
+                            <button class="nav-avatar" id="profileBtn" aria-label="Account menu">
+                                <?php if ($email !== ''): ?>
+                                    <img src="https://www.gravatar.com/avatar/<?= md5(strtolower($email)) ?>?s=64&d=404"
+                                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+                                         alt="" width="32" height="32">
+                                    <span class="nav-avatar-initials" style="display:none"><?= esc($initials) ?></span>
+                                <?php else: ?>
+                                    <span class="nav-avatar-initials"><?= esc($initials) ?></span>
+                                <?php endif; ?>
+                            </button>
+                            <div class="profile-dropdown" id="profileDropdown">
+                                <?php $role = session()->get('role') ?? 'User'; ?>
+                                <div class="dropdown-username">
+                                    <?= esc($showName) ?>
+                                    <?php if ($role === 'Admin'): ?>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;position:relative;top:-0.5px;margin-left:4px;flex-shrink:0"><path d="m15 12-8.5 8.5a2.12 2.12 0 1 1-3-3L12 9"/><path d="M17.64 15 22 10.64"/><path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91"/></svg>
+                                    <?php endif; ?>
+                                </div>
+                                <span class="dropdown-role role-<?= strtolower(esc($role)) ?>"><?= esc($role) ?></span>
+                                <hr class="profile-dropdown-divider">
+                                <a href="<?= site_url('dashboard') ?>" class="profile-dropdown-item">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"/></svg>
+                                    Dashboard
+                                </a>
+                                <a href="#" class="profile-dropdown-item">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+                                    Profile
+                                </a>
+                                <hr class="profile-dropdown-divider">
+                                <button class="profile-dropdown-item" id="logout-link">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15"/></svg>
+                                    Log out
+                                </button>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <a href="/login" class="btn-ghost">Log in</a>
+                        <a href="/register" class="btn-primary">Get Started</a>
+                    <?php endif; ?>
                     <button id="theme-toggle" class="btn-theme" aria-label="Toggle theme">
                         <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
@@ -700,7 +815,7 @@
                 <div class="hero-bg-glow"></div>
             </div>
             <p class="hero-sub">
-                Lorem ipsum dolor sit amet consectetur adipiscing elit. Dolor sit amet consectetur adipiscing elit quisque faucibus.
+                A website designed for traders who want to make informed decisions and trade with security.
             </p>
             <div class="container">
                 <h1 class="hero-title">
@@ -711,10 +826,12 @@
             <!-- Ticker strip -->
             <div class="ticker-strip ticker--intro">
                 <div class="ticker-inner">
-                    <span class="ticker-item"><span class="ticker-name">BTC/USDT</span><span class="ticker-price">$67,420</span><span class="ticker-change up">▲ +2.41%</span></span>
-                    <span class="ticker-item"><span class="ticker-name">ETH/USDT</span><span class="ticker-price">$3,511</span><span class="ticker-change up">▲ +1.78%</span></span>
-                    <span class="ticker-item"><span class="ticker-name">SOL/USDT</span><span class="ticker-price">$142.50</span><span class="ticker-change down">▼ -0.92%</span></span>
-                    <span class="ticker-item"><span class="ticker-name">BNB/USDT</span><span class="ticker-price">$589.00</span><span class="ticker-change up">▲ +3.12%</span></span>
+                    <?php foreach ($coins as $coin):
+                        $base = str_replace('USDT', '', $coin['coinname']);
+                        $slug = strtolower($base);
+                    ?>
+                    <span class="ticker-item" data-sym="<?= $slug ?>"><span class="ticker-name"><?= esc($base) ?>/USDT</span><span class="ticker-price">—</span><span class="ticker-change">—</span></span>
+                    <?php endforeach; ?>
                 </div>
             </div>
         </section>
@@ -736,7 +853,7 @@
                         <div class="stat-label">Platform Uptime</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">6.7 ★</div>
+                        <div class="stat-value">6.7 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="display:inline;width:0.85em;height:0.85em;vertical-align:middle;position:relative;top:-0.05em;"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd"/></svg></div>
                         <div class="stat-label">Average Rating</div>
                     </div>
                 </div>
@@ -759,7 +876,7 @@
                             </svg>
                         </div>
                         <h3>Real-Time Candlestick Charts</h3>
-                        <p>interactive chart blah blah</p>
+                        <p>Interactive chart with real-time updates.</p>
                     </div>
                     <div class="feature-card feature-card--accent">
                         <div class="feature-icon">
@@ -768,7 +885,7 @@
                             </svg>
                         </div>
                         <h3>Moving Average Indicators</h3>
-                        <p>automated ma20 &amp; ma50 calculation</p>
+                        <p>Automated MA20 &amp; MA50 calculation for trend analysis.</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">
@@ -777,7 +894,7 @@
                             </svg>
                         </div>
                         <h3>Binance Data Pipeline</h3>
-                        <p>Direct integration with the Binance kline API. Import historical and daily OHLCV data with deduplication built in.</p>
+                        <p>[Placeholder]</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">
@@ -786,7 +903,7 @@
                             </svg>
                         </div>
                         <h3>Secure Authentication</h3>
-                        <p>Role-based access control with remember-me sessions, email verification, and login throttling.</p>
+                        <p>[Placeholder]</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">
@@ -795,7 +912,7 @@
                             </svg>
                         </div>
                         <h3>Multi-Asset Support</h3>
-                        <p>Analyze BTC, ETH, SOL, and BNB side by side from a single unified dashboard.</p>
+                        <p>[Placeholder]</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">
@@ -804,7 +921,7 @@
                             </svg>
                         </div>
                         <h3>Automated Engine <span style="font-size:.7rem;color:var(--muted)">Coming Soon</span></h3>
-                        <p>A fully automated trading engine that executes on technical signals — actively in development.</p>
+                        <p>[Placeholder]</p>
                     </div>
                 </div>
             </div>
@@ -830,38 +947,25 @@
                             </tr>
                         </thead>
                         <tbody>
+                            <?php
+                            $fullNames = ['BTCUSDT' => 'Bitcoin', 'ETHUSDT' => 'Ethereum', 'SOLUSDT' => 'Solana', 'BNBUSDT' => 'BNB'];
+                            foreach ($coins as $i => $coin):
+                                $sym     = $coin['coinname'];
+                                $base    = str_replace('USDT', '', $sym);
+                                $slug    = strtolower($base);
+                                $ma      = $maData[$sym] ?? null;
+                                $ma20val = ($ma && $ma['ma20'] !== null) ? '$' . number_format((float)$ma['ma20'], 2) : '—';
+                                $ma50val = ($ma && $ma['ma50'] !== null) ? '$' . number_format((float)$ma['ma50'], 2) : '—';
+                            ?>
                             <tr>
-                                <td>1</td>
-                                <td><span class="coin-name">BTC</span><span class="coin-full">Bitcoin</span></td>
-                                <td>$67,420.00</td>
-                                <td class="up">+2.41%</td>
-                                <td>$65,210</td>
-                                <td>$61,430</td>
+                                <td><?= $i + 1 ?></td>
+                                <td><span class="coin-name"><?= esc($base) ?></span><span class="coin-full"><?= esc($fullNames[$sym] ?? $base) ?></span></td>
+                                <td id="home-price-<?= $slug ?>">—</td>
+                                <td id="home-change-<?= $slug ?>">—</td>
+                                <td><?= $ma20val ?></td>
+                                <td><?= $ma50val ?></td>
                             </tr>
-                            <tr>
-                                <td>2</td>
-                                <td><span class="coin-name">ETH</span><span class="coin-full">Ethereum</span></td>
-                                <td>$3,511.20</td>
-                                <td class="up">+1.78%</td>
-                                <td>$3,380</td>
-                                <td>$3,120</td>
-                            </tr>
-                            <tr>
-                                <td>3</td>
-                                <td><span class="coin-name">SOL</span><span class="coin-full">Solana</span></td>
-                                <td>$142.50</td>
-                                <td class="down">-0.92%</td>
-                                <td>$148</td>
-                                <td>$135</td>
-                            </tr>
-                            <tr>
-                                <td>4</td>
-                                <td><span class="coin-name">BNB</span><span class="coin-full">BNB</span></td>
-                                <td>$589.00</td>
-                                <td class="up">+3.12%</td>
-                                <td>$571</td>
-                                <td>$545</td>
-                            </tr>
+                            <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>
@@ -880,24 +984,24 @@
                 </div>
                 <div class="faq-list">
                     <div class="faq-item">
-                        <button class="faq-q"><span class="faq-num">01</span>Where does the market data come from?<span class="faq-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></button>
-                        <div class="faq-body"><p>All OHLCV data is sourced directly from the Binance API (api.binance.com/api/v3/klines) and stored in our MySQL database. Data is refreshed daily via an automated import pipeline.</p></div>
+                        <button class="faq-q"><span class="faq-num">01</span>Placeholder question one goes here?<span class="faq-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg></span></button>
+                        <div class="faq-body"><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p></div>
                     </div>
                     <div class="faq-item">
-                        <button class="faq-q"><span class="faq-num">02</span>Which coins are supported?<span class="faq-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></button>
-                        <div class="faq-body"><p>Currently we support BTCUSDT, ETHUSDT, SOLUSDT, and BNBUSDT. Additional trading pairs will be added as the platform grows.</p></div>
+                        <button class="faq-q"><span class="faq-num">02</span>Placeholder question two goes here?<span class="faq-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg></span></button>
+                        <div class="faq-body"><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p></div>
                     </div>
                     <div class="faq-item">
-                        <button class="faq-q"><span class="faq-num">03</span>How are MA20 and MA50 calculated?<span class="faq-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></button>
-                        <div class="faq-body"><p>Moving averages are computed server-side using a sliding window over close prices sorted oldest-first. They are batch-updated after each daily import run.</p></div>
+                        <button class="faq-q"><span class="faq-num">03</span>Placeholder question three goes here?<span class="faq-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg></span></button>
+                        <div class="faq-body"><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum.</p></div>
                     </div>
                     <div class="faq-item">
-                        <button class="faq-q"><span class="faq-num">04</span>Is there an automated trading feature?<span class="faq-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></button>
-                        <div class="faq-body"><p>An automated trading engine is in active development. The current platform focuses on data ingestion, indicator calculation, and interactive visualization.</p></div>
+                        <button class="faq-q"><span class="faq-num">04</span>Placeholder question four goes here?<span class="faq-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg></span></button>
+                        <div class="faq-body"><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia.</p></div>
                     </div>
                     <div class="faq-item">
-                        <button class="faq-q"><span class="faq-num">05</span>How do I get access to the dashboard?<span class="faq-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span></button>
-                        <div class="faq-body"><p>Register for a free account and log in. The dashboard requires authentication. Data import features require an Admin role assigned by a site administrator.</p></div>
+                        <button class="faq-q"><span class="faq-num">05</span>Placeholder question five goes here?<span class="faq-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg></span></button>
+                        <div class="faq-body"><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.</p></div>
                     </div>
                 </div>
             </div>
@@ -943,9 +1047,11 @@
                      + Math.cos(x * 3.2 + y * 0.8 + t * 0.5) * 0.35;
             }
 
-            const LEVELS = 8;
+            const LEVELS = 7;
+            function tick(ts) {
+                requestAnimationFrame(tick);
+                if (document.hidden) return;
 
-            function tick() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 const grid = [];
@@ -956,9 +1062,9 @@
                     }
                 }
 
+                const isLight = document.documentElement.getAttribute('data-theme') === 'light';
                 for (let l = 0; l < LEVELS; l++) {
                     const level = -1.3 + (l / (LEVELS - 1)) * 2.6;
-                    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
                     const alpha = l % 3 === 0 ? 0.22 : 0.12;
                     const lw    = isLight ? (l % 3 === 0 ? 1.8 : 1.2) : (l % 3 === 0 ? 1.2 : 0.8);
 
@@ -993,9 +1099,8 @@
                 }
 
                 t += 0.003;
-                requestAnimationFrame(tick);
             }
-            tick();
+            requestAnimationFrame(tick);
         })();
         // ─────────────────────────────────────────────────────────
 
@@ -1020,6 +1125,18 @@
             btn.closest('.faq-item').classList.toggle('open');
         });
     });
+
+    (function initProfileDropdown() {
+        const profileBtn = document.getElementById('profileBtn');
+        if (!profileBtn) return;
+        const profileDropdown = document.getElementById('profileDropdown');
+        profileBtn.addEventListener('click', e => { e.stopPropagation(); profileDropdown.classList.toggle('show'); });
+        profileDropdown.addEventListener('click', e => e.stopPropagation());
+        document.addEventListener('click', () => profileDropdown.classList.remove('show'));
+        document.getElementById('logout-link').addEventListener('click', () => {
+            window.location.href = '<?= site_url('logout') ?>';
+        });
+    })();
 
     (function initTheme() {
         const html = document.documentElement;
@@ -1088,21 +1205,64 @@
         });
     })();
 
+    // Market data — Binance batch fetch
+    (function () {
+        const symbols  = <?= json_encode(array_column($coins, 'coinname')) ?>;
+        const encoded  = encodeURIComponent(JSON.stringify(symbols));
+
+        function update() {
+            fetch(`https://api.binance.com/api/v3/ticker/24hr?symbols=${encoded}`)
+                .then(r => r.json())
+                .then(list => {
+                    list.forEach(data => {
+                        const slug  = data.symbol.toLowerCase().replace('usdt', '');
+                        const price = '$' + parseFloat(data.lastPrice).toLocaleString('en-US', { minimumFractionDigits: 2 });
+                        const pct   = parseFloat(data.priceChangePercent);
+                        const cls   = pct >= 0 ? 'up' : 'down';
+
+                        // Table
+                        const prEl = document.getElementById('home-price-'  + slug);
+                        const chEl = document.getElementById('home-change-' + slug);
+                        if (prEl) prEl.textContent = price;
+                        if (chEl) { chEl.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%'; chEl.className = cls; }
+
+                        // Ticker strip (all duplicated instances)
+                        document.querySelectorAll(`.ticker-item[data-sym="${slug}"]`).forEach(el => {
+                            el.querySelector('.ticker-price').textContent = price;
+                            const tc = el.querySelector('.ticker-change');
+                            tc.textContent = (pct >= 0 ? '▲ +' : '▼ ') + Math.abs(pct).toFixed(2) + '%';
+                            tc.className   = 'ticker-change ' + cls;
+                        });
+                    });
+                })
+                .catch(() => {});
+        }
+
+        update();
+        setInterval(update, 30000);
+    })();
+
     (function () {
         const o = document.getElementById('intro-overlay');
-        // bar → small rect
-        setTimeout(() => o.classList.add('phase2'), 80);
-        // small rect → full screen
-        setTimeout(() => o.classList.add('phase3'), 500);
-        // remove overlay + reveal nav + reveal ticker
-        setTimeout(() => {
-            o.remove();
-            document.querySelector('.nav').classList.remove('nav--intro');
-            const ticker = document.querySelector('.ticker-strip');
-            ticker.classList.remove('ticker--intro');
-            ticker.classList.add('ray-sweep');
-            setTimeout(() => ticker.classList.remove('ray-sweep'), 1700);
-        }, 1100);
+
+        function runIntro() {
+            setTimeout(() => o.classList.add('phase2'), 80);
+            setTimeout(() => o.classList.add('phase3'), 500);
+            setTimeout(() => {
+                o.remove();
+                document.querySelector('.nav').classList.remove('nav--intro');
+                const ticker = document.querySelector('.ticker-strip');
+                ticker.classList.remove('ticker--intro');
+                ticker.classList.add('ray-sweep');
+                setTimeout(() => ticker.classList.remove('ray-sweep'), 1700);
+            }, 1100);
+        }
+
+        if (document.readyState === 'complete') {
+            runIntro();
+        } else {
+            window.addEventListener('load', runIntro);
+        }
     })();
     </script>
 </body>
