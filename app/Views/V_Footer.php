@@ -10,8 +10,10 @@
                 <div class="footer-col">
                     <h4>Platform</h4>
                     <a href="/dashboard">Dashboard</a>
+                    <?php if (session()->get('role') === 'Admin'): ?>
                     <a href="/database">Database</a>
                     <a href="/importbinance">Import Data</a>
+                    <?php endif; ?>
                 </div>
                 <div class="footer-col">
                     <h4>Account</h4>

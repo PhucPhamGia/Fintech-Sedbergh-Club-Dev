@@ -161,7 +161,7 @@ class C_Auth extends BaseController
         }
 
         # Check if account is banned
-        if ($userStatus === 'banned') {
+        if (strtolower((string)$userStatus) === 'banned') {
             return redirect()->back()->withInput()->with('error', 'This account has been banned. Please contact support for further assistance.');
         }
 
@@ -215,6 +215,13 @@ class C_Auth extends BaseController
             'role'         => $userRole ?? 'User',
             'logged_in'    => true,
         ]);
+
+        // Record last login time.
+        try {
+            $this->M_Auth->update($userId, ['last_login' => Time::now()->toDateTimeString()]);
+        } catch (\Throwable $e) {
+            log_message('warning', 'last_login update failed: ' . $e->getMessage());
+        }
 
         // Remember-me: store a random token (hashed server-side) and set a cookie.
         if ($userId) {
@@ -291,8 +298,8 @@ class C_Auth extends BaseController
         $rules = [
             'first_name'       => 'required|min_length[2]|max_length[50]',
             'last_name'        => 'required|min_length[2]|max_length[50]',
-            'username'         => 'required|min_length[4]|max_length[25]|regex_match[/^\S+$/]',
-            'email'            => 'required|valid_email|max_length[100]',
+            'username'         => 'required|min_length[4]|max_length[25]|regex_match[/^\S+$/]|is_unique[auth.username]',
+            'email'            => 'required|valid_email|max_length[100]|is_unique[auth.email]',
             'password'         => 'required|min_length[6]|max_length[255]|matches[password_confirm]',
             'password_confirm' => 'required|min_length[6]|max_length[255]',
         ];
@@ -405,6 +412,164 @@ class C_Auth extends BaseController
         }
 
         return redirect()->to('/login')->with('success', 'Registration successful. You can now log in.');
+    }
+
+    private const ACHIEVEMENT_KEYS = ['grass', 'dummy'];
+
+    public function Achievement_Grant()
+    {
+        $userId = (int) session()->get('user_id');
+        $key    = (string) $this->request->getPost('achievement');
+        if (in_array($key, self::ACHIEVEMENT_KEYS, true)) {
+            $this->M_Users->grantAchievement($userId, $key);
+        }
+        return redirect()->back()->with('success', "Granted: $key")->with('play_toast', $key);
+    }
+
+    public function Achievement_Revoke()
+    {
+        $userId = (int) session()->get('user_id');
+        $key    = (string) $this->request->getPost('achievement');
+        if (in_array($key, self::ACHIEVEMENT_KEYS, true)) {
+            $this->M_Users->revokeAchievement($userId, $key);
+        }
+        return redirect()->back()->with('success', "Revoked: $key");
+    }
+
+    public function Achievement()
+    {
+        $userId = session()->get('user_id');
+        if (!$userId) {
+            return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthorized']);
+        }
+
+        $key     = (string) $this->request->getPost('achievement');
+        $allowed = self::ACHIEVEMENT_KEYS;
+        if (!in_array($key, $allowed, true)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'Invalid achievement']);
+        }
+
+        $this->M_Users->grantAchievement((int) $userId, $key);
+        return $this->response->setJSON(['ok' => true]);
+    }
+
+    public function Google_Redirect()
+    {
+        $provider = $this->googleProvider();
+        $authUrl  = $provider->getAuthorizationUrl(['scope' => ['openid', 'email', 'profile']]);
+        session()->set('oauth2_state', $provider->getState());
+        return redirect()->to($authUrl);
+    }
+
+    public function Google_Callback()
+    {
+        $state = (string) $this->request->getGet('state');
+        $code  = (string) $this->request->getGet('code');
+
+        if ($state === '' || $state !== session()->get('oauth2_state')) {
+            session()->remove('oauth2_state');
+            return redirect()->to('/login')->with('error', 'Invalid OAuth state. Please try again.');
+        }
+        session()->remove('oauth2_state');
+
+        if ($code === '') {
+            return redirect()->to('/login')->with('error', 'Google sign-in was cancelled.');
+        }
+
+        try {
+            $provider    = $this->googleProvider();
+            $token       = $provider->getAccessToken('authorization_code', ['code' => $code]);
+            $googleUser  = $provider->getResourceOwner($token);
+
+            $googleId    = (string) $googleUser->getId();
+            $email       = strtolower(trim((string) $googleUser->getEmail()));
+            $firstName   = (string) ($googleUser->getFirstName() ?? '');
+            $lastName    = (string) ($googleUser->getLastName()  ?? '');
+            $displayName = trim($firstName . ' ' . $lastName) ?: $googleUser->getName() ?? $email;
+        } catch (\Throwable $e) {
+            log_message('error', 'Google OAuth callback failed: ' . $e->getMessage());
+            return redirect()->to('/login')->with('error', 'Google sign-in failed. Please try again.');
+        }
+
+        // Find existing account by google_id or email (merge if email matches)
+        $authModel  = $this->M_Auth;
+        $usersModel = $this->M_Users;
+
+        $authRow = $authModel->where('google_id', $googleId)->first();
+        if (! $authRow) {
+            $authRow = $authModel->where('email', $email)->first();
+        }
+
+        $now = \CodeIgniter\I18n\Time::now()->toDateTimeString();
+
+        if ($authRow) {
+            // Existing user — link google_id if not set, then log in
+            $userId = (int) ($authRow['id'] ?? 0);
+            if (empty($authRow['google_id'])) {
+                $authModel->update($userId, ['google_id' => $googleId]);
+            }
+            $authModel->update($userId, ['last_login' => $now]);
+        } else {
+            // New user — register automatically
+            try {
+                $conn = $authModel->db;
+                $conn->transBegin();
+
+                $authId = $authModel->insert([
+                    'username'   => 'google_' . $googleId,
+                    'email'      => $email,
+                    'google_id'  => $googleId,
+                    'created_at' => $now,
+                ], true);
+
+                if (! is_numeric($authId) || (int) $authId <= 0) {
+                    throw new \RuntimeException('Failed to create auth record.');
+                }
+                $authId = (int) $authId;
+
+                $usersModel->insert([
+                    'id'           => $authId,
+                    'first_name'   => $firstName ?: 'User',
+                    'last_name'    => $lastName  ?: '',
+                    'display_name' => $displayName,
+                    'role'         => 'User',
+                    'status'       => 'active',
+                    'created_at'   => $now,
+                ], false);
+
+                $conn->transCommit();
+                $userId  = $authId;
+                $authRow = $authModel->find($userId);
+            } catch (\Throwable $e) {
+                $authModel->db->transRollback();
+                log_message('error', 'Google auto-register failed: ' . $e->getMessage());
+                return redirect()->to('/login')->with('error', 'Could not create your account. Please try again.');
+            }
+        }
+
+        $userProfile = $usersModel->find($userId);
+
+        $session = session();
+        $session->regenerate(true);
+        $session->set([
+            'user_id'      => $userId,
+            'username'     => $authRow['username']              ?? '',
+            'email'        => $authRow['email']                 ?? $email,
+            'display_name' => $userProfile['display_name']      ?? $displayName,
+            'role'         => $userProfile['role']              ?? 'User',
+            'logged_in'    => true,
+        ]);
+
+        return redirect()->to('/dashboard');
+    }
+
+    private function googleProvider(): \League\OAuth2\Client\Provider\Google
+    {
+        return new \League\OAuth2\Client\Provider\Google([
+            'clientId'     => $_ENV['GOOGLE_CLIENT_ID']     ?? '',
+            'clientSecret' => $_ENV['GOOGLE_CLIENT_SECRET'] ?? '',
+            'redirectUri'  => base_url('auth/google/callback'),
+        ]);
     }
 
     public function Forgot_Password() // Forgot password

@@ -12,26 +12,33 @@
     google.charts.setOnLoadCallback(drawChart);
 
     function drawChart() {
-      const ohlcData = <?= $table ?>;
-      const ma20Data = <?= $ma20 ?>;
-      const ma50Data = <?= $ma50 ?>;
+      var ohlcData = <?= $table ?>;
+      var ma20Data = <?= $ma20 ?>;
+      var ma50Data = <?= $ma50 ?>;
 
-      if (!ohlcData[0].includes('Date')) ohlcData.unshift(['Date', 'Low', 'Open', 'Close', 'High']);
-      if (!ma20Data[0].includes('MA20')) ma20Data.unshift(['Date', 'MA20']);
-      if (!ma50Data[0].includes('MA50')) ma50Data.unshift(['Date', 'MA50']);
+      var ma20Map = {}, ma50Map = {};
+      ma20Data.forEach(function(r) { if (r[1] !== null) ma20Map[r[0]] = r[1]; });
+      ma50Data.forEach(function(r) { if (r[1] !== null) ma50Map[r[0]] = r[1]; });
 
-      const ohlcTable = google.visualization.arrayToDataTable(ohlcData);
-      const ma20Table = google.visualization.arrayToDataTable(ma20Data);
-      const ma50Table = google.visualization.arrayToDataTable(ma50Data);
+      var data = new google.visualization.DataTable();
+      data.addColumn('datetime', 'Date');
+      data.addColumn('number', 'Low');
+      data.addColumn('number', 'Open');
+      data.addColumn('number', 'Close');
+      data.addColumn('number', 'High');
+      data.addColumn('number', 'MA20');
+      data.addColumn('number', 'MA50');
 
-      let joinedData = google.visualization.data.join(
-        ohlcTable, ma20Table, 'full', [[0, 0]], [1, 2, 3, 4], [1]
-      );
-      joinedData = google.visualization.data.join(
-        joinedData, ma50Table, 'full', [[0, 0]], [1, 2, 3, 4, 5], [1]
-      );
+      ohlcData.forEach(function(r) {
+        data.addRow([
+          new Date(r[0]),
+          r[1], r[2], r[3], r[4],
+          ma20Map[r[0]] !== undefined ? ma20Map[r[0]] : null,
+          ma50Map[r[0]] !== undefined ? ma50Map[r[0]] : null
+        ]);
+      });
 
-      const options = {
+      var options = {
         backgroundColor: '#202b3a',
         legend: { position: 'bottom', textStyle: { color: '#e8eaf6', fontSize: 12 } },
         hAxis: {
@@ -44,30 +51,22 @@
           gridlines: { color: '#2a3d59' },
           baselineColor: '#2a3d59'
         },
-        chartArea: {
-          backgroundColor: '#202b3a',
-          left: 65,
-          right: 20,
-          top: 40,
-          bottom: 60,
-        },
+        chartArea: { backgroundColor: '#202b3a', left: 65, right: 20, top: 40, bottom: 60 },
         interpolateNulls: true,
         seriesType: 'candlesticks',
         series: {
           0: { type: 'candlesticks', visibleInLegend: false },
-          1: { type: 'line', color: '#00e676', lineWidth: 2 },
-          2: { type: 'line', color: '#00bfff', lineWidth: 2 }
+          1: { type: 'line', color: '#34D399', lineWidth: 2, labelInLegend: 'MA20' },
+          2: { type: 'line', color: '#38BDF8', lineWidth: 2, labelInLegend: 'MA50' }
         },
         candlestick: {
-          fallingColor: { strokeWidth: 1, fill: '#ff595e', stroke: '#ff595e' },
-          risingColor: { strokeWidth: 1, fill: '#2176ff', stroke: '#2176ff' }
+          fallingColor: { strokeWidth: 1, fill: '#F87171', stroke: '#F87171' },
+          risingColor:  { strokeWidth: 1, fill: '#34D399', stroke: '#34D399' }
         }
       };
 
-      const chart = new google.visualization.ComboChart(
-        document.getElementById('chart_div')
-      );
-      chart.draw(joinedData, options);
+      var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
+      chart.draw(data, options);
     }
   </script>
 

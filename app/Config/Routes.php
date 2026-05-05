@@ -22,6 +22,9 @@ $routes->get('/', 'C_View::Home');
 $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->get('/dashboard', 'C_View::Dashboard');
     $routes->post('/dashboard', 'C_View::Dashboard');
+    $routes->post('/auth/achievement', 'C_Auth::Achievement');
+    $routes->get('/api/chart/(:num)/(:segment)', 'C_View::Chart_Data/$1/$2');
+    $routes->get('/profile', 'C_View::Profile');
 });
 
 # Database
@@ -33,6 +36,8 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 # Authentication
 $routes->get('/login', 'C_View::Login');
 $routes->post('/auth/login', 'C_Auth::Login_Post');
+$routes->get('/auth/google', 'C_Auth::Google_Redirect');
+$routes->get('/auth/google/callback', 'C_Auth::Google_Callback');
 
 $routes->get('/login/forgot-password', 'C_View::Forgot_Password');
 $routes->post('/auth/forgot-password', 'C_Auth::Forgot_Password');
@@ -43,6 +48,12 @@ $routes->get('/register', 'C_View::Register');
 $routes->post('/auth/register', 'C_Auth::Register_Post');
 
 # Admin
+$routes->group('', ['filter' => 'admin'], function($routes) {
+    $routes->get('/admin/achievements', 'C_View::Achievements_Admin');
+    $routes->post('/admin/achievements/grant',  'C_Auth::Achievement_Grant');
+    $routes->post('/admin/achievements/revoke', 'C_Auth::Achievement_Revoke');
+});
+
 # Database Import
 $routes->group('', ['filter' => 'admin'], function($routes) {
     $routes->post('/importbinance', 'C_Database::Binance_Import');

@@ -20,4 +20,36 @@ class M_Users extends Model
 
 		'created_at',       # TIMESTAMP
 	];
+
+    public function hasAchievement(int $userId, string $key): bool
+    {
+        try {
+            return (bool) $this->db->table('user_achievements')
+                ->where('user_id', $userId)
+                ->where('achievement', $key)
+                ->countAllResults();
+        } catch (\Throwable $e) {
+            return true; // table missing → treat as earned so dashboard doesn't crash
+        }
+    }
+
+    public function grantAchievement(int $userId, string $key): void
+    {
+        try {
+            $this->db->table('user_achievements')->insert([
+                'user_id'     => $userId,
+                'achievement' => $key,
+            ]);
+        } catch (\Throwable $e) {
+            // UNIQUE KEY violation = already earned, safe to ignore
+        }
+    }
+
+    public function revokeAchievement(int $userId, string $key): void
+    {
+        $this->db->table('user_achievements')
+            ->where('user_id', $userId)
+            ->where('achievement', $key)
+            ->delete();
+    }
 }

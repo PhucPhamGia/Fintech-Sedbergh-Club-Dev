@@ -78,11 +78,17 @@ class RememberMe implements FilterInterface
 		}
 
 		// Valid token: establish session.
+		$M_Users     = new \App\Models\M_Users();
+		$userProfile = $M_Users->find((int) $userId);
+
 		$session->regenerate(true);
 		$session->set([
-			'user_id'   => $userId,
-			'username'  => is_array($user) ? ($user['username'] ?? null) : ($user->username ?? null),
-			'logged_in' => true,
+			'user_id'      => $userId,
+			'username'     => is_array($user) ? ($user['username'] ?? '') : ($user->username ?? ''),
+			'email'        => is_array($user) ? ($user['email']    ?? '') : ($user->email    ?? ''),
+			'display_name' => $userProfile['display_name'] ?? '',
+			'role'         => $userProfile['role']         ?? 'User',
+			'logged_in'    => true,
 		]);
 
 		// Rotate token on use.

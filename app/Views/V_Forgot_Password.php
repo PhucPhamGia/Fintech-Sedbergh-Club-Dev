@@ -3,7 +3,7 @@
 <head>
     <?= view('V_Head') ?>
     <title>Forgot Password</title>
-    <link rel="stylesheet" href="<?= base_url('assets/css/login.css'); ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/auth.css') ?>">
 </head>
 <body>
     <!-- Footer -->
